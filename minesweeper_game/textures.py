@@ -7,147 +7,106 @@ def asset_path_(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "assets", path)
 
 
-def get_tilemap_(tilemap_file, count, size_x, size_y):
-    tilemap = pygame.image.load(asset_path_(tilemap_file))
+class Tilemap:
+    def __init__(self, tilemap_file, tile_size_x, tile_size_y, count=None):
+        self.tilemap_ = pygame.image.load(asset_path_(tilemap_file))
 
-    width, height = tilemap.get_size()
-    assert width % size_x == 0
-    assert height % size_y == 0
+        self.tile_size_x_ = tile_size_x
+        self.tile_size_y_ = tile_size_y
 
-    rows = height // size_y
-    cols = width // size_x
-    assert count <= rows * cols
+        width, height = self.tilemap_.get_size()
+        if width % tile_size_x != 0 or height % tile_size_y != 0:
+            raise ValueError(
+                f"Tilemap's dimensions ({width}x{height}) not divisible by tile's dimensions ({tile_size_x}x{tile_size_y})"
+            )
 
-    for i in range(count):
-        row = i // cols
-        col = i % cols
+        self.cols_ = width // tile_size_x
+        self.rows_ = height // tile_size_y
 
-        rect = pygame.Rect(col * size_x, row * size_y, size_x, size_y)
-        tile = tilemap.subsurface(rect)
-        yield tile
+        self.count_ = count or self.cols_ * self.rows_
+        if self.count_ > self.cols_ * self.rows_:
+            raise ValueError(
+                f"Requestes tile count ({self.count_}) higher than possible in tilemap ({self.cols_}x{self.rows_})"
+            )
+
+    def __getitem__(self, index):
+        row = index // self.cols_
+        col = index & self.cols_
+
+        rect = pygame.Rect(
+            col * self.tile_size_x_,
+            row * self.tile_size_y_,
+            self.tile_size_x_,
+            self.tile_size_y_,
+        )
+        tile = self.tilemap_.subsurface(rect)
+
+        return tile
+
+
+TILES_ = Tilemap("tiles.bmp", 16, 16)
+FACES_ = Tilemap("faces.bmp", 28, 28, 5)
+COUNTER_BORDER_ = Tilemap("counter_border.bmp", 16, 16, 8)
+COUNTER_ = Tilemap("counter.bmp", 16, 32, 11)
+BORDER_ = Tilemap("border.bmp", 16, 16)
 
 
 class TEXTURES:
     class TILES:
-        V1 = None
-        V2 = None
-        V3 = None
-        V4 = None
-        V5 = None
-        V6 = None
-        V7 = None
-        V8 = None
-        PRESSED = None
-        UNCOVERED = None
-        FLAGGED = None
-        FALSEMINE = None
-        PRESSED_QUESTION = None
-        QUESTION = None
-        PRESSED_MINE = None
-        BLOWN_MINE = None
+        V1 = TILES_[0]
+        V2 = TILES_[1]
+        V3 = TILES_[2]
+        V4 = TILES_[3]
+        V5 = TILES_[4]
+        V6 = TILES_[5]
+        V7 = TILES_[6]
+        V8 = TILES_[7]
+        PRESSED = TILES_[8]
+        UNCOVERED = TILES_[9]
+        FLAGGED = TILES_[10]
+        FALSEMINE = TILES_[11]
+        PRESSED_QUESTION = TILES_[12]
+        QUESTION = TILES_[13]
+        PRESSED_MINE = TILES_[14]
+        BLOWN_MINE = TILES_[15]
 
     class FACES:
-        DEAD = None
-        PRESSED_HAPPY = None
-        HAPPY = None
-        WINNER = None
-        CAUTIOUS = None
+        DEAD = FACES_[0]
+        PRESSED_HAPPY = FACES_[1]
+        HAPPY = FACES_[2]
+        WINNER = FACES_[3]
+        CAUTIOUS = FACES_[4]
 
-    class COUNTERBORDERS:
-        TOPLEFT = None
-        TOP = None
-        TOPRIGHT = None
-        LEFT = None
-        RIGHT = None
-        BOTTOMLEFT = None
-        BOTTOM = None
-        BOTTOMRIGHT = None
+    class COUNTER_BORDER:
+        TOPLEFT = COUNTER_BORDER_[0]
+        TOP = COUNTER_BORDER_[1]
+        TOPRIGHT = COUNTER_BORDER_[2]
+        LEFT = COUNTER_BORDER_[3]
+        RIGHT = COUNTER_BORDER_[4]
+        BOTTOMLEFT = COUNTER_BORDER_[5]
+        BOTTOM = COUNTER_BORDER_[6]
+        BOTTOMRIGHT = COUNTER_BORDER_[7]
 
     class COUNTER:
-        V0 = None
-        MINUS = None
-        V9 = None
-        V8 = None
-        V7 = None
-        V6 = None
-        V5 = None
-        V4 = None
-        V3 = None
-        V2 = None
-        V1 = None
+        V0 = COUNTER_[0]
+        MINUS = COUNTER_[1]
+        V9 = COUNTER_[2]
+        V8 = COUNTER_[3]
+        V7 = COUNTER_[4]
+        V6 = COUNTER_[5]
+        V5 = COUNTER_[6]
+        V4 = COUNTER_[7]
+        V3 = COUNTER_[8]
+        V2 = COUNTER_[9]
+        V1 = COUNTER_[10]
 
     class BORDER:
-        TBL = None
-        TBR = None
-        BR = None
-        LR = None
-        BL = None
-        TL = None
-        TR = None
-        TB = None
-        FILL = None
-
-
-(
-    TEXTURES.TILES.V1,
-    TEXTURES.TILES.V2,
-    TEXTURES.TILES.V3,
-    TEXTURES.TILES.V4,
-    TEXTURES.TILES.V5,
-    TEXTURES.TILES.V6,
-    TEXTURES.TILES.V7,
-    TEXTURES.TILES.V8,
-    TEXTURES.TILES.PRESSED,
-    TEXTURES.TILES.UNCOVERED,
-    TEXTURES.TILES.FLAGGED,
-    TEXTURES.TILES.FALSEMINE,
-    TEXTURES.TILES.PRESSED_QUESTION,
-    TEXTURES.TILES.QUESTION,
-    TEXTURES.TILES.PRESSED_MINE,
-    TEXTURES.TILES.BLOWN_MINE,
-) = get_tilemap_("tiles.bmp", 16, 16, 16)
-
-(
-    TEXTURES.FACES.DEAD,
-    TEXTURES.FACES.PRESSED_HAPPY,
-    TEXTURES.FACES.HAPPY,
-    TEXTURES.FACES.WINNER,
-    TEXTURES.FACES.CAUTIOUS,
-) = get_tilemap_("faces.bmp", 5, 28, 28)
-
-(
-    TEXTURES.COUNTERBORDERS.TOPLEFT,
-    TEXTURES.COUNTERBORDERS.TOP,
-    TEXTURES.COUNTERBORDERS.TOPRIGHT,
-    TEXTURES.COUNTERBORDERS.LEFT,
-    TEXTURES.COUNTERBORDERS.RIGHT,
-    TEXTURES.COUNTERBORDERS.BOTTOMLEFT,
-    TEXTURES.COUNTERBORDERS.BOTTOM,
-    TEXTURES.COUNTERBORDERS.BOTTOMRIGHT,
-) = get_tilemap_("counter_border.bmp", 8, 16, 16)
-
-(
-    TEXTURES.COUNTER.V0,
-    TEXTURES.COUNTER.MINUS,
-    TEXTURES.COUNTER.V9,
-    TEXTURES.COUNTER.V8,
-    TEXTURES.COUNTER.V7,
-    TEXTURES.COUNTER.V6,
-    TEXTURES.COUNTER.V5,
-    TEXTURES.COUNTER.V4,
-    TEXTURES.COUNTER.V3,
-    TEXTURES.COUNTER.V2,
-    TEXTURES.COUNTER.V1,
-) = get_tilemap_("counter.bmp", 11, 16, 32)
-
-(
-    TEXTURES.BORDER.TBL,
-    TEXTURES.BORDER.TBR,
-    TEXTURES.BORDER.BR,
-    TEXTURES.BORDER.LR,
-    TEXTURES.BORDER.BL,
-    TEXTURES.BORDER.TL,
-    TEXTURES.BORDER.TR,
-    TEXTURES.BORDER.TB,
-    TEXTURES.BORDER.FILL,
-) = get_tilemap_("border.bmp", 9, 16, 16)
+        TBL = BORDER_[0]
+        TBR = BORDER_[1]
+        BR = BORDER_[2]
+        LR = BORDER_[3]
+        BL = BORDER_[4]
+        TL = BORDER_[5]
+        TR = BORDER_[6]
+        TB = BORDER_[7]
+        FILL = BORDER_[9]
