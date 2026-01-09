@@ -30,8 +30,11 @@ class Tilemap:
             )
 
     def __getitem__(self, index):
+        if index >= self.count_:
+            raise IndexError(f"Tile's index out of bounds ({index}/{self.count_})")
+
         row = index // self.cols_
-        col = index & self.cols_
+        col = index % self.cols_
 
         rect = pygame.Rect(
             col * self.tile_size_x_,
@@ -109,4 +112,4 @@ class TEXTURES:
         TL = BORDER_[5]
         TR = BORDER_[6]
         TB = BORDER_[7]
-        FILL = BORDER_[9]
+        FILL = BORDER_[8]
