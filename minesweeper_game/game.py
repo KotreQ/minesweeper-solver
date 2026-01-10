@@ -3,7 +3,7 @@ from enum import Enum, auto
 
 class TileState(Enum):
     COVERED = auto()
-    MARKED = auto()
+    FLAGGED = auto()
     QUESTIONED = auto()
     UNCOVERED = auto()
 
