@@ -1,13 +1,11 @@
 import pygame
 
-from .window import MinesweeperWindow
 from .game import MinesweeperGame
+from .window import MinesweeperWindow
 
 ROWS = 16
 COLS = 16
 MINES = 40
-
-SAFE_START_NEIGHBOURS = False  # make all neighbours of starting tile safe?
 
 
 def main() -> None:
