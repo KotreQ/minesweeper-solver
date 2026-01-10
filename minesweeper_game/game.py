@@ -27,3 +27,28 @@ class MinesweeperGame:
         self.cols = cols
         self.rows = rows
         self.grid = [[Tile() for _ in range(cols)] for _ in range(rows)]
+
+    def cycle_covered_state(self, x, y) -> bool:  # true if succeeded
+        tile = self.grid[y][x]
+
+        match tile.state:
+            case TileState.COVERED:
+                new_state = TileState.FLAGGED
+            case TileState.FLAGGED:
+                new_state = TileState.QUESTIONED
+            case TileState.QUESTIONED:
+                new_state = TileState.COVERED
+            case TileState.UNCOVERED:
+                return False
+
+        tile.state = new_state
+        return True
+
+    def uncover(self, x, y) -> bool:  # true if the game continues
+        tile = self.grid[y][x]
+
+        if tile.state == TileState.FLAGGED:
+            return True
+
+        tile.state = TileState.UNCOVERED
+        return not tile.is_mine
