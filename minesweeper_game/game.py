@@ -15,6 +15,14 @@ class Tile:
         self.state = TileState.COVERED
 
 
+def get_neighbours(x, y, w, h):
+    for i in range(x - 1, x + 2):
+        for j in range(y - 1, y + 2):
+            if i < 0 or j < 0 or i >= w or j >= h or (i == x and j == y):
+                continue
+            yield x, y
+
+
 class MinesweeperGame:
     def __init__(self, cols, rows, mine_count):
         assert cols >= 9
@@ -27,6 +35,13 @@ class MinesweeperGame:
         self.cols = cols
         self.rows = rows
         self.grid = [[Tile() for _ in range(cols)] for _ in range(rows)]
+
+    def calculate_values(self):
+        for i, row in enumerate(self.grid):
+            for j, tile in enumerate(row):
+                if tile.is_mine:
+                    for x, y in get_neighbours(j, i, self.cols, self.rows):
+                        self.grid[y][x].value += 1
 
     def cycle_covered_state(self, x, y) -> bool:  # true if succeeded
         tile = self.grid[y][x]
