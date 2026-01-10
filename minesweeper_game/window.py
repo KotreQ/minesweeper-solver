@@ -1,6 +1,6 @@
 import pygame
 
-from .game import MinesweeperGame
+from .game import MinesweeperGame, Tile, TileState
 from .textures import TEXTURES
 
 WINDOW_CAPTION = "Minesweeper by KotreQ"
@@ -8,7 +8,7 @@ FPS = 60
 TILE_WIDTH = 16
 
 
-def generate_board_graphics_(cols, rows):
+def generate_board_graphics_(cols: int, rows: int):
     tile_rows = 1 + 3 + 1 + rows + 1
     tile_cols = 1 + cols + 1
     horizontal_rows = [0, 4, tile_rows - 1]
@@ -50,11 +50,73 @@ def generate_board_graphics_(cols, rows):
     return board_graphics
 
 
+TILE_VALUE_TEXTURES = [
+    TEXTURES.TILES.V0,
+    TEXTURES.TILES.V1,
+    TEXTURES.TILES.V2,
+    TEXTURES.TILES.V3,
+    TEXTURES.TILES.V4,
+    TEXTURES.TILES.V5,
+    TEXTURES.TILES.V6,
+    TEXTURES.TILES.V7,
+    TEXTURES.TILES.V8,
+]
+
+
+def get_tile_texture_(tile: Tile, is_pressed: bool):
+    match tile.state, is_pressed:
+        case TileState.COVERED, False:
+            return TEXTURES.TILES.COVERED
+        case TileState.COVERED, True:
+            return TEXTURES.TILES.V0
+        case TileState.FLAGGED, _:
+            return TEXTURES.TILES.FLAGGED
+        case TileState.QUESTIONED, False:
+            return TEXTURES.TILES.QUESTION
+        case TileState.QUESTIONED, True:
+            return TEXTURES.TILES.PRESSED_QUESTION
+        case (
+            TileState.UNCOVERED,
+            False,
+        ) if tile.is_bomb:
+            return TEXTURES.TILES.PRESSED_MINE
+        case (
+            TileState.UNCOVERED,
+            True,
+        ) if tile.is_bomb:
+            return TEXTURES.TILES.BLOWN_MINE
+        case TileState.UNCOVERED, _ if not tile.is_bomb:
+            return TILE_VALUE_TEXTURES[tile.value]
+
+
+def generate_grid_graphics_(
+    grid: list[list[Tile]], pressed: tuple[int, int] | None = None
+):
+    x_offset = (1) * TILE_WIDTH
+    y_offset = (1 + 3 + 1) * TILE_WIDTH
+
+    grid_graphics = []
+
+    for i, row in enumerate(grid):
+        for j, tile in enumerate(row):
+            y = i * TILE_WIDTH + y_offset
+            x = j * TILE_WIDTH + x_offset
+            is_pressed = (i, j) == pressed
+
+            txt = get_tile_texture_(tile, is_pressed)
+
+            grid_graphics.append((txt, (x, y)))
+
+    return grid_graphics
+
+
 class MinesweeperWindow:
     def __init__(self, game: MinesweeperGame):
         self.game_ = game
 
-        self.board_graphics_ = generate_board_graphics_(self.game_.cols, self.game_.rows)
+        self.board_graphics_ = generate_board_graphics_(
+            self.game_.cols, self.game_.rows
+        )
 
         window_width = (1 + self.game_.cols + 1) * TILE_WIDTH
         window_height = (1 + 3 + 1 + self.game_.rows + 1) * TILE_WIDTH
@@ -87,7 +149,10 @@ class MinesweeperWindow:
         for event in pygame.event.get():
             self.event_handler_(event)
 
+        grid_graphics = generate_grid_graphics_(self.game_.grid)
+
         self.surface_.blits(self.board_graphics_, doreturn=False)
+        self.surface_.blits(grid_graphics, doreturn=False)
 
         pygame.display.update()
 
