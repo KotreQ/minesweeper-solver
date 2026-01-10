@@ -78,14 +78,14 @@ def get_tile_texture_(tile: Tile, is_pressed: bool):
         case (
             TileState.UNCOVERED,
             False,
-        ) if tile.is_bomb:
+        ) if tile.is_mine:
             return TEXTURES.TILES.PRESSED_MINE
         case (
             TileState.UNCOVERED,
             True,
-        ) if tile.is_bomb:
+        ) if tile.is_mine:
             return TEXTURES.TILES.BLOWN_MINE
-        case TileState.UNCOVERED, _ if not tile.is_bomb:
+        case TileState.UNCOVERED, _ if not tile.is_mine:
             return TILE_VALUE_TEXTURES[tile.value]
 
 

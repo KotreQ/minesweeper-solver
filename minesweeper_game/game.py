@@ -10,7 +10,7 @@ class TileState(Enum):
 
 class Tile:
     def __init__(self):
-        self.is_bomb = False
+        self.is_mine = False
         self.value = 0
         self.state = TileState.COVERED
 
