@@ -20,7 +20,7 @@ def get_neighbours(x, y, w, h):
         for j in range(y - 1, y + 2):
             if i < 0 or j < 0 or i >= w or j >= h or (i == x and j == y):
                 continue
-            yield x, y
+            yield i, j
 
 
 class MinesweeperGame:
