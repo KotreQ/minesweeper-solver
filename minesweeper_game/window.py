@@ -8,16 +8,16 @@ FPS = 60
 TILE_WIDTH = 16
 
 
-def generate_board_textures_(cols, rows):
-    texture_rows = 1 + 3 + 1 + rows + 1
-    texture_cols = 1 + cols + 1
-    horizontal_rows = [0, 4, texture_rows - 1]
-    vertical_cols = [0, texture_cols - 1]
+def generate_board_graphics_(cols, rows):
+    tile_rows = 1 + 3 + 1 + rows + 1
+    tile_cols = 1 + cols + 1
+    horizontal_rows = [0, 4, tile_rows - 1]
+    vertical_cols = [0, tile_cols - 1]
 
-    board_textures = []
+    board_graphics = []
 
-    for row in range(texture_rows):
-        for col in range(texture_cols):
+    for row in range(tile_rows):
+        for col in range(tile_cols):
             txt = TEXTURES.BORDER.FILL
 
             if row in horizontal_rows and col in vertical_cols:
@@ -45,16 +45,16 @@ def generate_board_textures_(cols, rows):
             else:
                 txt = TEXTURES.BORDER.FILL
 
-            board_textures.append((txt, (col * TILE_WIDTH, row * TILE_WIDTH)))
+            board_graphics.append((txt, (col * TILE_WIDTH, row * TILE_WIDTH)))
 
-    return board_textures
+    return board_graphics
 
 
 class MinesweeperWindow:
     def __init__(self, game: MinesweeperGame):
         self.game_ = game
 
-        self.board_texture_ = generate_board_textures_(self.game_.cols, self.game_.rows)
+        self.board_graphics_ = generate_board_graphics_(self.game_.cols, self.game_.rows)
 
         window_width = (1 + self.game_.cols + 1) * TILE_WIDTH
         window_height = (1 + 3 + 1 + self.game_.rows + 1) * TILE_WIDTH
@@ -87,7 +87,7 @@ class MinesweeperWindow:
         for event in pygame.event.get():
             self.event_handler_(event)
 
-        self.surface_.blits(self.board_texture_, doreturn=False)
+        self.surface_.blits(self.board_graphics_, doreturn=False)
 
         pygame.display.update()
 
