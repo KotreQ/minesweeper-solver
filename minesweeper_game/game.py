@@ -91,7 +91,6 @@ class MinesweeperGame:
             self.mines_placed_ = True
 
         if tile.is_mine:
-            print("MINE")
             tile.state = TileState.UNCOVERED
             return False
 
