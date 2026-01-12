@@ -10,6 +10,9 @@ class TileState(Enum):
     UNCOVERED = auto()
 
 
+ENABLE_QUESTIONED = False
+
+
 class Tile:
     def __init__(self):
         self.is_mine = False
@@ -71,7 +74,9 @@ class MinesweeperGame:
             case TileState.COVERED:
                 new_state = TileState.FLAGGED
             case TileState.FLAGGED:
-                new_state = TileState.QUESTIONED
+                new_state = (
+                    TileState.QUESTIONED if ENABLE_QUESTIONED else TileState.COVERED
+                )
             case TileState.QUESTIONED:
                 new_state = TileState.COVERED
             case TileState.UNCOVERED:
