@@ -118,7 +118,23 @@ class MinesweeperGame:
             self.__place_mines([(x, y)])
             self.__mines_placed = True
 
-        to_uncover = deque([(x, y)])
+        to_uncover = deque()
+
+        if tile.state == TileState.UNCOVERED:
+            unflagged_neighbours = []
+            flagged_neighbours = 0
+            for x, y in get_neighbours(x, y, self.cols, self.rows):
+                if self.grid[y][x].state == TileState.FLAGGED:
+                    flagged_neighbours += 1
+                elif self.grid[y][x].state != TileState.UNCOVERED:
+                    unflagged_neighbours.append((x, y))
+
+            if flagged_neighbours == tile.value:
+                to_uncover.extend(unflagged_neighbours)
+
+        else:
+            to_uncover.append((x, y))
+
         while to_uncover:
             cur_x, cur_y = to_uncover.pop()
             cur_tile = self.grid[cur_y][cur_x]

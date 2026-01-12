@@ -1,6 +1,6 @@
 import pygame
 
-from .game import GameState, MinesweeperGame, Tile, TileState
+from .game import GameState, MinesweeperGame, Tile, TileState, get_neighbours
 from .textures import TEXTURES
 
 WINDOW_CAPTION = "Minesweeper by KotreQ"
@@ -97,7 +97,7 @@ def get_tile_texture_(tile: Tile, is_pressed: bool, game_state: GameState):
 
 
 def generate_grid_graphics_(
-    grid: list[list[Tile]], pressed: tuple[int, int], game_state: GameState
+    grid: list[list[Tile]], pressed: set[tuple[int, int]], game_state: GameState
 ):
     x_offset = (1) * TILE_WIDTH
     y_offset = (1 + 3 + 1) * TILE_WIDTH
@@ -108,7 +108,7 @@ def generate_grid_graphics_(
         for j, tile in enumerate(row):
             y = i * TILE_WIDTH + y_offset
             x = j * TILE_WIDTH + x_offset
-            is_pressed = (j, i) == pressed
+            is_pressed = (j, i) in pressed
 
             txt = get_tile_texture_(tile, is_pressed, game_state)
 
@@ -145,7 +145,7 @@ class MinesweeperWindow:
         self.__window_alive = True
 
         self.__mouse_event = ((0, 0), -1)
-        self.__pressed = None
+        self.__pressed = set()
         self.__pressed_face = False
 
     def __init_game(self):
@@ -203,9 +203,18 @@ class MinesweeperWindow:
 
                 pressed_tile, pressed_face = pressed_result
                 if (
-                    self.__game.state == GameState.RUNNING and event.button == 1
+                    self.__game.state == GameState.RUNNING
+                    and event.button == 1
+                    and pressed_tile is not None
                 ):  # if finished, only face is updated, the blown mine stays marked as pressed
-                    self.__pressed = pressed_tile
+                    self.__pressed.add(pressed_tile)
+
+                    # if pressed uncovered tile, highlight neighbours as pressed
+                    x, y = pressed_tile
+                    if self.__game.grid[y][x].state == TileState.UNCOVERED:
+                        for x, y in get_neighbours(x, y, self.__cols, self.__rows):
+                            self.__pressed.add((x, y))
+
                 self.__pressed_face = pressed_face
 
             case pygame.MOUSEBUTTONUP:
@@ -224,7 +233,7 @@ class MinesweeperWindow:
                     elif pressed_face:
                         self.__init_game()
 
-                self.__pressed = None
+                self.__pressed.clear()
                 self.__pressed_face = False
 
     def tick(self) -> bool:  # returns true if window is alive
@@ -237,7 +246,7 @@ class MinesweeperWindow:
         )
 
         face_texture = get_face_texture_(
-            self.__game.state, self.__pressed is not None, self.__pressed_face
+            self.__game.state, bool(self.__pressed), self.__pressed_face
         )
 
         self.__surface.blits(self.__board_graphics, doreturn=False)
