@@ -1,6 +1,6 @@
 import pygame
 
-from .game import MinesweeperGame, Tile, TileState
+from .game import GameState, MinesweeperGame, Tile, TileState
 from .textures import TEXTURES
 
 WINDOW_CAPTION = "Minesweeper by KotreQ"
@@ -63,34 +63,41 @@ TILE_VALUE_TEXTURES = [
 ]
 
 
-def get_tile_texture_(tile: Tile, is_pressed: bool):
-    match tile.state, is_pressed:
-        case TileState.COVERED, False:
-            return TEXTURES.TILES.COVERED
-        case TileState.COVERED, True:
+def get_tile_texture_(tile: Tile, is_pressed: bool, game_state: GameState):
+    match tile.state, is_pressed, tile.is_mine, game_state:
+        case TileState.COVERED, True, _, GameState.RUNNING:
             return TEXTURES.TILES.V0
-        case TileState.FLAGGED, _:
-            return TEXTURES.TILES.FLAGGED
-        case TileState.QUESTIONED, False:
-            return TEXTURES.TILES.QUESTION
-        case TileState.QUESTIONED, True:
-            return TEXTURES.TILES.PRESSED_QUESTION
-        case (
-            TileState.UNCOVERED,
-            False,
-        ) if tile.is_mine:
+        case TileState.COVERED, _, True, GameState.LOST:
             return TEXTURES.TILES.PRESSED_MINE
-        case (
-            TileState.UNCOVERED,
-            True,
-        ) if tile.is_mine:
-            return TEXTURES.TILES.BLOWN_MINE
-        case TileState.UNCOVERED, _ if not tile.is_mine:
+        case TileState.COVERED, _, True, GameState.WON:
+            return TEXTURES.TILES.FLAGGED
+        case TileState.COVERED, _, _, _:
+            return TEXTURES.TILES.COVERED
+
+        case TileState.FLAGGED, _, False, GameState.LOST:
+            return TEXTURES.TILES.FALSEMINE
+        case TileState.FLAGGED, _, _, _:
+            return TEXTURES.TILES.FLAGGED
+
+        case TileState.QUESTIONED, True, _, GameState.RUNNING:
+            return TEXTURES.TILES.PRESSED_QUESTION
+        case TileState.QUESTIONED, _, True, GameState.LOST:
+            return TEXTURES.TILES.PRESSED_MINE
+        case TileState.QUESTIONED, _, True, GameState.LOST:
+            return TEXTURES.TILES.FLAGGED
+        case TileState.QUESTIONED, _, _, _:
+            return TEXTURES.TILES.QUESTION
+
+        case TileState.UNCOVERED, _, False, _:
             return TILE_VALUE_TEXTURES[tile.value]
+        case TileState.UNCOVERED, _, True, GameState.LOST:
+            return TEXTURES.TILES.BLOWN_MINE
+        case TileState.UNCOVERED, _, True, GameState.RUNNING | GameState.WON:
+            return TEXTURES.ERROR
 
 
 def generate_grid_graphics_(
-    grid: list[list[Tile]], pressed: tuple[int, int] | None = None
+    grid: list[list[Tile]], pressed: tuple[int, int], game_state: GameState
 ):
     x_offset = (1) * TILE_WIDTH
     y_offset = (1 + 3 + 1) * TILE_WIDTH
@@ -101,9 +108,9 @@ def generate_grid_graphics_(
         for j, tile in enumerate(row):
             y = i * TILE_WIDTH + y_offset
             x = j * TILE_WIDTH + x_offset
-            is_pressed = (i, j) == pressed
+            is_pressed = (j, i) == pressed
 
-            txt = get_tile_texture_(tile, is_pressed)
+            txt = get_tile_texture_(tile, is_pressed, game_state)
 
             grid_graphics.append((txt, (x, y)))
 
@@ -123,37 +130,92 @@ class MinesweeperWindow:
 
         self.surface_ = pygame.display.set_mode((window_width, window_height))
 
+        self.face_pos_ = (
+            ((1 + self.game_.cols + 1) * TILE_WIDTH - 28) // 2,
+            1 * TILE_WIDTH + 10,
+        )
+
         self.clock_ = pygame.time.Clock()
-        self.running_ = True
+        self.window_alive_ = True
+
+        self.mouse_event_ = ((0, 0), -1)
+        self.pressed_ = None
+        self.pressed_face_ = False
 
         pygame.display.set_caption(WINDOW_CAPTION)
 
+    def calculate_pressed_element_(
+        self, pos
+    ) -> tuple[tuple[int, int] | None, bool]:  # returns (pressed_tile, is_pressed_face)
+        x, y = pos
+        face_dx = x - self.face_pos_[0]
+        face_dy = y - self.face_pos_[1]
+        if face_dx >= 0 and face_dx < 28 and face_dy >= 0 and face_dy < 28:
+            face_pressed = True
+        else:
+            face_pressed = False
+
+        grid_x = (1) * TILE_WIDTH
+        grid_y = (1 + 3 + 1) * TILE_WIDTH
+        width = self.game_.cols * TILE_WIDTH
+        height = self.game_.rows * TILE_WIDTH
+        if x >= grid_x and x < grid_x + width and y >= grid_y and y < grid_y + height:
+            tile_x = (x - grid_x) // TILE_WIDTH
+            tile_y = (y - grid_y) // TILE_WIDTH
+            return (tile_x, tile_y), face_pressed
+
+        return (None), face_pressed
+
     def event_handler_(self, event):
-        if event.type == pygame.QUIT:
-            self.running_ = False
-            return
+        match event.type:
+            case pygame.QUIT:
+                self.window_alive_ = False
 
-        # press_event: (pressing a button cancels previous unpressed event if there was one -> just replace variables)
-        # 	pressed = event.x, event.y
-        # 	press_button = event.btn (if right -> no animation)
+            case pygame.MOUSEBUTTONDOWN:
+                pressed_result = self.calculate_pressed_element_(event.pos)
+                self.mouse_event_ = (
+                    pressed_result,
+                    event.button,
+                )
 
-        # release_event:
-        # 	unpressed = event.x, event.y
-        # 	unpress_button = event.btn
+                pressed_tile, pressed_face = pressed_result
+                if (
+                    self.game_.state == GameState.RUNNING and event.button == 1
+                ):  # if finished, only face is updated, the blown mine stays marked as pressed
+                    self.pressed_ = pressed_tile
+                self.pressed_face_ = pressed_face
 
-        # 	if pressed == unpressed and press_button == unpress_button:
-        # 		pressed.action(press_button)
+            case pygame.MOUSEBUTTONUP:
+                up_event = (self.calculate_pressed_element_(event.pos), event.button)
+
+                if self.mouse_event_ == up_event:
+                    pressed_result, button = self.mouse_event_
+                    pressed_tile, pressed_face = pressed_result
+                    if pressed_tile is not None:
+                        match button:
+                            case 1:
+                                self.game_.uncover(*pressed_tile)
+                            case 3:
+                                self.game_.cycle_covered_state(*pressed_tile)
+
+                    elif pressed_face:
+                        pass  # TODO: Restart game
+
+                self.pressed_ = None
+                self.pressed_face_ = False
 
     def tick(self) -> bool:  # returns true if window is alive
         self.clock_.tick(FPS)
         for event in pygame.event.get():
             self.event_handler_(event)
 
-        grid_graphics = generate_grid_graphics_(self.game_.grid)
+        grid_graphics = generate_grid_graphics_(
+            self.game_.grid, self.pressed_, self.game_.state
+        )
 
         self.surface_.blits(self.board_graphics_, doreturn=False)
         self.surface_.blits(grid_graphics, doreturn=False)
 
         pygame.display.update()
 
-        return self.running_
+        return self.window_alive_
