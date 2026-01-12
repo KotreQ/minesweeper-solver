@@ -117,6 +117,22 @@ def generate_grid_graphics_(
     return grid_graphics
 
 
+def get_face_texture_(
+    game_state: GameState, any_tile_pressed: bool, face_pressed: bool
+):
+    match game_state, any_tile_pressed, face_pressed:
+        case GameState.RUNNING, False, False:
+            return TEXTURES.FACES.HAPPY
+        case GameState.RUNNING, True, _:
+            return TEXTURES.FACES.CAUTIOUS
+        case _, _, True:
+            return TEXTURES.FACES.PRESSED_HAPPY
+        case GameState.LOST, _, False:
+            return TEXTURES.FACES.DEAD
+        case GameState.WON, _, False:
+            return TEXTURES.FACES.WINNER
+
+
 class MinesweeperWindow:
     def __init__(self, game: MinesweeperGame):
         self.game_ = game
@@ -213,8 +229,13 @@ class MinesweeperWindow:
             self.game_.grid, self.pressed_, self.game_.state
         )
 
+        face_texture = get_face_texture_(
+            self.game_.state, self.pressed_ is not None, self.pressed_face_
+        )
+
         self.surface_.blits(self.board_graphics_, doreturn=False)
         self.surface_.blits(grid_graphics, doreturn=False)
+        self.surface_.blit(face_texture, self.face_pos_)
 
         pygame.display.update()
 
