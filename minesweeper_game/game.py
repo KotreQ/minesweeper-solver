@@ -47,19 +47,23 @@ class MinesweeperGame:
         self.rows = rows
         self.mine_count = mine_count
         self.grid = [[Tile() for _ in range(cols)] for _ in range(rows)]
-        self.mines_placed_ = False
+        self.__mines_placed = False
 
-        self.game_state_ = GameState.RUNNING
+        self.__game_state = GameState.RUNNING
 
-        self.uncovered_tiles_ = 0
+        self.__uncovered_tiles = 0
 
     @property
     def state(self):
-        return self.game_state_
+        return self.__game_state
 
-    def place_mine_(self, x, y) -> bool:  # true if succeeded
+    @property
+    def uncovered_tiles(self):
+        return self.__uncovered_tiles
+
+    def __place_mine(self, x, y):
         if self.grid[y][x].is_mine:
-            return False
+            raise ValueError(f"Mine is already at ({x},{y})")
 
         self.grid[y][x].is_mine = True
 
@@ -68,7 +72,7 @@ class MinesweeperGame:
 
         return True
 
-    def place_mines(self, safe_spots=[]):
+    def __place_mines(self, safe_spots=[]):
         safe_spots = set(safe_spots)
         potential_spots = [
             (x, y)
@@ -79,10 +83,10 @@ class MinesweeperGame:
         mine_spots = random.sample(potential_spots, self.mine_count)
 
         for x, y in mine_spots:
-            self.place_mine_(x, y)
+            self.__place_mine(x, y)
 
     def cycle_covered_state(self, x, y):
-        if self.game_state_ != GameState.RUNNING:
+        if self.__game_state != GameState.RUNNING:
             return
 
         tile = self.grid[y][x]
@@ -102,7 +106,7 @@ class MinesweeperGame:
         tile.state = new_state
 
     def uncover(self, x, y):
-        if self.game_state_ != GameState.RUNNING:
+        if self.__game_state != GameState.RUNNING:
             return
 
         tile = self.grid[y][x]
@@ -110,9 +114,9 @@ class MinesweeperGame:
         if tile.state == TileState.FLAGGED:
             return
 
-        if not self.mines_placed_:
-            self.place_mines([(x, y)])
-            self.mines_placed_ = True
+        if not self.__mines_placed:
+            self.__place_mines([(x, y)])
+            self.__mines_placed = True
 
         to_uncover = deque([(x, y)])
         while to_uncover:
@@ -120,11 +124,11 @@ class MinesweeperGame:
             cur_tile = self.grid[cur_y][cur_x]
 
             if cur_tile.state != TileState.UNCOVERED:
-                self.uncovered_tiles_ += 1
+                self.__uncovered_tiles += 1
                 cur_tile.state = TileState.UNCOVERED
 
             if cur_tile.is_mine:
-                self.game_state_ = GameState.LOST
+                self.__game_state = GameState.LOST
                 return
 
             if cur_tile.value == 0:
@@ -135,5 +139,5 @@ class MinesweeperGame:
                     ):
                         to_uncover.append((nx, ny))
 
-        if self.uncovered_tiles_ == (self.cols * self.rows) - self.mine_count:
-            self.game_state_ = GameState.WON
+        if self.__uncovered_tiles == (self.cols * self.rows) - self.mine_count:
+            self.__game_state = GameState.WON

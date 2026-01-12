@@ -3,116 +3,116 @@ import os
 import pygame
 
 
-def asset_path_(path: str) -> str:
+def asset_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "assets", path)
 
 
 class Tilemap:
     def __init__(self, tilemap_file, tile_size_x, tile_size_y, count=None):
-        self.tilemap_ = pygame.image.load(asset_path_(tilemap_file))
+        self.__tilemap = pygame.image.load(asset_path(tilemap_file))
 
-        self.tile_size_x_ = tile_size_x
-        self.tile_size_y_ = tile_size_y
+        self.__tile_size_x = tile_size_x
+        self.__tile_size_y = tile_size_y
 
-        width, height = self.tilemap_.get_size()
+        width, height = self.__tilemap.get_size()
         if width % tile_size_x != 0 or height % tile_size_y != 0:
             raise ValueError(
                 f"Tilemap's dimensions ({width}x{height}) not divisible by tile's dimensions ({tile_size_x}x{tile_size_y})"
             )
 
-        self.cols_ = width // tile_size_x
-        self.rows_ = height // tile_size_y
+        self.__cols = width // tile_size_x
+        self.__rows = height // tile_size_y
 
-        self.count_ = count or self.cols_ * self.rows_
-        if self.count_ > self.cols_ * self.rows_:
+        self.__count = count or self.__cols * self.__rows
+        if self.__count > self.__cols * self.__rows:
             raise ValueError(
-                f"Requestes tile count ({self.count_}) higher than possible in tilemap ({self.cols_}x{self.rows_})"
+                f"Requestes tile count ({self.__count}) higher than possible in tilemap ({self.__cols}x{self.__rows})"
             )
 
     def __getitem__(self, index):
-        if index >= self.count_:
-            raise IndexError(f"Tile's index out of bounds ({index}/{self.count_})")
+        if index >= self.__count:
+            raise IndexError(f"Tile's index out of bounds ({index}/{self.__count})")
 
-        row = index // self.cols_
-        col = index % self.cols_
+        row = index // self.__cols
+        col = index % self.__cols
 
         rect = pygame.Rect(
-            col * self.tile_size_x_,
-            row * self.tile_size_y_,
-            self.tile_size_x_,
-            self.tile_size_y_,
+            col * self.__tile_size_x,
+            row * self.__tile_size_y,
+            self.__tile_size_x,
+            self.__tile_size_y,
         )
-        tile = self.tilemap_.subsurface(rect)
+        tile = self.__tilemap.subsurface(rect)
 
         return tile
 
 
-TILES_ = Tilemap("tiles.bmp", 16, 16)
-FACES_ = Tilemap("faces.bmp", 28, 28, 5)
-COUNTER_BORDER_ = Tilemap("counter_border.bmp", 16, 16, 8)
-COUNTER_ = Tilemap("counter.bmp", 16, 32, 11)
-BORDER_ = Tilemap("border.bmp", 16, 16)
-ERROR_ = Tilemap("error.bmp", 16, 16)
+TILES = Tilemap("tiles.bmp", 16, 16)
+FACES = Tilemap("faces.bmp", 28, 28, 5)
+COUNTER_BORDER = Tilemap("counter_border.bmp", 16, 16, 8)
+COUNTER = Tilemap("counter.bmp", 16, 32, 11)
+BORDER = Tilemap("border.bmp", 16, 16)
+ERROR = Tilemap("error.bmp", 16, 16)
 
 
 class TEXTURES:
-    ERROR = ERROR_[0]
+    ERROR = ERROR[0]
 
     class TILES:
-        V1 = TILES_[0]
-        V2 = TILES_[1]
-        V3 = TILES_[2]
-        V4 = TILES_[3]
-        V5 = TILES_[4]
-        V6 = TILES_[5]
-        V7 = TILES_[6]
-        V8 = TILES_[7]
-        V0 = TILES_[8]
-        COVERED = TILES_[9]
-        FLAGGED = TILES_[10]
-        FALSEMINE = TILES_[11]
-        PRESSED_QUESTION = TILES_[12]
-        QUESTION = TILES_[13]
-        PRESSED_MINE = TILES_[14]
-        BLOWN_MINE = TILES_[15]
+        V1 = TILES[0]
+        V2 = TILES[1]
+        V3 = TILES[2]
+        V4 = TILES[3]
+        V5 = TILES[4]
+        V6 = TILES[5]
+        V7 = TILES[6]
+        V8 = TILES[7]
+        V0 = TILES[8]
+        COVERED = TILES[9]
+        FLAGGED = TILES[10]
+        FALSEMINE = TILES[11]
+        PRESSED_QUESTION = TILES[12]
+        QUESTION = TILES[13]
+        PRESSED_MINE = TILES[14]
+        BLOWN_MINE = TILES[15]
 
     class FACES:
-        DEAD = FACES_[0]
-        PRESSED_HAPPY = FACES_[1]
-        HAPPY = FACES_[2]
-        WINNER = FACES_[3]
-        CAUTIOUS = FACES_[4]
+        DEAD = FACES[0]
+        PRESSED_HAPPY = FACES[1]
+        HAPPY = FACES[2]
+        WINNER = FACES[3]
+        CAUTIOUS = FACES[4]
 
     class COUNTER_BORDER:
-        TOPLEFT = COUNTER_BORDER_[0]
-        TOP = COUNTER_BORDER_[1]
-        TOPRIGHT = COUNTER_BORDER_[2]
-        LEFT = COUNTER_BORDER_[3]
-        RIGHT = COUNTER_BORDER_[4]
-        BOTTOMLEFT = COUNTER_BORDER_[5]
-        BOTTOM = COUNTER_BORDER_[6]
-        BOTTOMRIGHT = COUNTER_BORDER_[7]
+        TOPLEFT = COUNTER_BORDER[0]
+        TOP = COUNTER_BORDER[1]
+        TOPRIGHT = COUNTER_BORDER[2]
+        LEFT = COUNTER_BORDER[3]
+        RIGHT = COUNTER_BORDER[4]
+        BOTTOMLEFT = COUNTER_BORDER[5]
+        BOTTOM = COUNTER_BORDER[6]
+        BOTTOMRIGHT = COUNTER_BORDER[7]
 
     class COUNTER:
-        V0 = COUNTER_[0]
-        MINUS = COUNTER_[1]
-        V9 = COUNTER_[2]
-        V8 = COUNTER_[3]
-        V7 = COUNTER_[4]
-        V6 = COUNTER_[5]
-        V5 = COUNTER_[6]
-        V4 = COUNTER_[7]
-        V3 = COUNTER_[8]
-        V2 = COUNTER_[9]
-        V1 = COUNTER_[10]
+        V0 = COUNTER[0]
+        MINUS = COUNTER[1]
+        V9 = COUNTER[2]
+        V8 = COUNTER[3]
+        V7 = COUNTER[4]
+        V6 = COUNTER[5]
+        V5 = COUNTER[6]
+        V4 = COUNTER[7]
+        V3 = COUNTER[8]
+        V2 = COUNTER[9]
+        V1 = COUNTER[10]
 
     class BORDER:
-        TBL = BORDER_[0]
-        TBR = BORDER_[1]
-        BR = BORDER_[2]
-        LR = BORDER_[3]
-        BL = BORDER_[4]
-        TL = BORDER_[5]
-        TR = BORDER_[6]
-        TB = BORDER_[7]
-        FILL = BORDER_[8]
+        TBL = BORDER[0]
+        TBR = BORDER[1]
+        BR = BORDER[2]
+        LR = BORDER[3]
+        BL = BORDER[4]
+        TL = BORDER[5]
+        TR = BORDER[6]
+        TB = BORDER[7]
+        FILL = BORDER[8]

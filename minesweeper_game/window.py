@@ -135,44 +135,44 @@ def get_face_texture_(
 
 class MinesweeperWindow:
     def __init__(self, cols, rows, mine_count):
-        self.cols_ = cols
-        self.rows_ = rows
-        self.mine_count_ = mine_count
+        self.__cols = cols
+        self.__rows = rows
+        self.__mine_count = mine_count
 
-        self.init_game_()
+        self.__init_game()
 
-        self.clock_ = pygame.time.Clock()
-        self.window_alive_ = True
+        self.__clock = pygame.time.Clock()
+        self.__window_alive = True
 
-        self.mouse_event_ = ((0, 0), -1)
-        self.pressed_ = None
-        self.pressed_face_ = False
+        self.__mouse_event = ((0, 0), -1)
+        self.__pressed = None
+        self.__pressed_face = False
 
-    def init_game_(self):
-        self.game_ = MinesweeperGame(self.cols_, self.rows_, self.mine_count_)
+    def __init_game(self):
+        self.__game = MinesweeperGame(self.__cols, self.__rows, self.__mine_count)
 
-        self.board_graphics_ = generate_board_graphics_(
-            self.game_.cols, self.game_.rows
+        self.__board_graphics = generate_board_graphics_(
+            self.__game.cols, self.__game.rows
         )
 
-        window_width = (1 + self.game_.cols + 1) * TILE_WIDTH
-        window_height = (1 + 3 + 1 + self.game_.rows + 1) * TILE_WIDTH
+        window_width = (1 + self.__game.cols + 1) * TILE_WIDTH
+        window_height = (1 + 3 + 1 + self.__game.rows + 1) * TILE_WIDTH
 
-        self.surface_ = pygame.display.set_mode((window_width, window_height))
+        self.__surface = pygame.display.set_mode((window_width, window_height))
 
-        self.face_pos_ = (
-            ((1 + self.game_.cols + 1) * TILE_WIDTH - 28) // 2,
+        self.__face_pos = (
+            ((1 + self.__game.cols + 1) * TILE_WIDTH - 28) // 2,
             1 * TILE_WIDTH + 10,
         )
 
         pygame.display.set_caption(WINDOW_CAPTION)
 
-    def calculate_pressed_element_(
+    def __calculate_pressed_element(
         self, pos
     ) -> tuple[tuple[int, int] | None, bool]:  # returns (pressed_tile, is_pressed_face)
         x, y = pos
-        face_dx = x - self.face_pos_[0]
-        face_dy = y - self.face_pos_[1]
+        face_dx = x - self.__face_pos[0]
+        face_dy = y - self.__face_pos[1]
         if face_dx >= 0 and face_dx < 28 and face_dy >= 0 and face_dy < 28:
             face_pressed = True
         else:
@@ -180,8 +180,8 @@ class MinesweeperWindow:
 
         grid_x = (1) * TILE_WIDTH
         grid_y = (1 + 3 + 1) * TILE_WIDTH
-        width = self.game_.cols * TILE_WIDTH
-        height = self.game_.rows * TILE_WIDTH
+        width = self.__game.cols * TILE_WIDTH
+        height = self.__game.rows * TILE_WIDTH
         if x >= grid_x and x < grid_x + width and y >= grid_y and y < grid_y + height:
             tile_x = (x - grid_x) // TILE_WIDTH
             tile_y = (y - grid_y) // TILE_WIDTH
@@ -189,61 +189,61 @@ class MinesweeperWindow:
 
         return (None), face_pressed
 
-    def event_handler_(self, event):
+    def __event_handler(self, event):
         match event.type:
             case pygame.QUIT:
-                self.window_alive_ = False
+                self.__window_alive = False
 
             case pygame.MOUSEBUTTONDOWN:
-                pressed_result = self.calculate_pressed_element_(event.pos)
-                self.mouse_event_ = (
+                pressed_result = self.__calculate_pressed_element(event.pos)
+                self.__mouse_event = (
                     pressed_result,
                     event.button,
                 )
 
                 pressed_tile, pressed_face = pressed_result
                 if (
-                    self.game_.state == GameState.RUNNING and event.button == 1
+                    self.__game.state == GameState.RUNNING and event.button == 1
                 ):  # if finished, only face is updated, the blown mine stays marked as pressed
-                    self.pressed_ = pressed_tile
-                self.pressed_face_ = pressed_face
+                    self.__pressed = pressed_tile
+                self.__pressed_face = pressed_face
 
             case pygame.MOUSEBUTTONUP:
-                up_event = (self.calculate_pressed_element_(event.pos), event.button)
+                up_event = (self.__calculate_pressed_element(event.pos), event.button)
 
-                if self.mouse_event_ == up_event:
-                    pressed_result, button = self.mouse_event_
+                if self.__mouse_event == up_event:
+                    pressed_result, button = self.__mouse_event
                     pressed_tile, pressed_face = pressed_result
                     if pressed_tile is not None:
                         match button:
                             case 1:
-                                self.game_.uncover(*pressed_tile)
+                                self.__game.uncover(*pressed_tile)
                             case 3:
-                                self.game_.cycle_covered_state(*pressed_tile)
+                                self.__game.cycle_covered_state(*pressed_tile)
 
                     elif pressed_face:
-                        self.init_game_()
+                        self.__init_game()
 
-                self.pressed_ = None
-                self.pressed_face_ = False
+                self.__pressed = None
+                self.__pressed_face = False
 
     def tick(self) -> bool:  # returns true if window is alive
-        self.clock_.tick(FPS)
+        self.__clock.tick(FPS)
         for event in pygame.event.get():
-            self.event_handler_(event)
+            self.__event_handler(event)
 
         grid_graphics = generate_grid_graphics_(
-            self.game_.grid, self.pressed_, self.game_.state
+            self.__game.grid, self.__pressed, self.__game.state
         )
 
         face_texture = get_face_texture_(
-            self.game_.state, self.pressed_ is not None, self.pressed_face_
+            self.__game.state, self.__pressed is not None, self.__pressed_face
         )
 
-        self.surface_.blits(self.board_graphics_, doreturn=False)
-        self.surface_.blits(grid_graphics, doreturn=False)
-        self.surface_.blit(face_texture, self.face_pos_)
+        self.__surface.blits(self.__board_graphics, doreturn=False)
+        self.__surface.blits(grid_graphics, doreturn=False)
+        self.__surface.blit(face_texture, self.__face_pos)
 
         pygame.display.update()
 
-        return self.window_alive_
+        return self.__window_alive
