@@ -1,18 +1,16 @@
 import pygame
 
-from .game import MinesweeperGame
 from .window import MinesweeperWindow
 
-ROWS = 16
 COLS = 16
+ROWS = 16
 MINES = 40
 
 
 def main() -> None:
     pygame.init()
 
-    game = MinesweeperGame(COLS, ROWS, MINES)
-    window = MinesweeperWindow(game)
+    window = MinesweeperWindow(COLS, ROWS, MINES)
 
     running = True
     while running:

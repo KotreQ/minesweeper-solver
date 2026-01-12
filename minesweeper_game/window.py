@@ -134,8 +134,22 @@ def get_face_texture_(
 
 
 class MinesweeperWindow:
-    def __init__(self, game: MinesweeperGame):
-        self.game_ = game
+    def __init__(self, cols, rows, mine_count):
+        self.cols_ = cols
+        self.rows_ = rows
+        self.mine_count_ = mine_count
+
+        self.init_game_()
+
+        self.clock_ = pygame.time.Clock()
+        self.window_alive_ = True
+
+        self.mouse_event_ = ((0, 0), -1)
+        self.pressed_ = None
+        self.pressed_face_ = False
+
+    def init_game_(self):
+        self.game_ = MinesweeperGame(self.cols_, self.rows_, self.mine_count_)
 
         self.board_graphics_ = generate_board_graphics_(
             self.game_.cols, self.game_.rows
@@ -150,13 +164,6 @@ class MinesweeperWindow:
             ((1 + self.game_.cols + 1) * TILE_WIDTH - 28) // 2,
             1 * TILE_WIDTH + 10,
         )
-
-        self.clock_ = pygame.time.Clock()
-        self.window_alive_ = True
-
-        self.mouse_event_ = ((0, 0), -1)
-        self.pressed_ = None
-        self.pressed_face_ = False
 
         pygame.display.set_caption(WINDOW_CAPTION)
 
@@ -215,7 +222,7 @@ class MinesweeperWindow:
                                 self.game_.cycle_covered_state(*pressed_tile)
 
                     elif pressed_face:
-                        pass  # TODO: Restart game
+                        self.init_game_()
 
                 self.pressed_ = None
                 self.pressed_face_ = False
