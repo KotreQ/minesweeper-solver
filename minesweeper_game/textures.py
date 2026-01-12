@@ -52,9 +52,12 @@ FACES_ = Tilemap("faces.bmp", 28, 28, 5)
 COUNTER_BORDER_ = Tilemap("counter_border.bmp", 16, 16, 8)
 COUNTER_ = Tilemap("counter.bmp", 16, 32, 11)
 BORDER_ = Tilemap("border.bmp", 16, 16)
+ERROR_ = Tilemap("error.bmp", 16, 16)
 
 
 class TEXTURES:
+    ERROR = ERROR_[0]
+
     class TILES:
         V1 = TILES_[0]
         V2 = TILES_[1]
