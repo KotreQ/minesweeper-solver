@@ -52,6 +52,7 @@ class MinesweeperGame:
         self.__game_state = GameState.RUNNING
 
         self.__uncovered_tiles = 0
+        self.__flags_placed = 0
 
     @property
     def state(self):
@@ -60,6 +61,10 @@ class MinesweeperGame:
     @property
     def uncovered_tiles(self):
         return self.__uncovered_tiles
+
+    @property
+    def flags_placed(self):
+        return self.__flags_placed
 
     @property
     def cols(self):
@@ -106,10 +111,12 @@ class MinesweeperGame:
         match tile.state:
             case TileState.COVERED:
                 new_state = TileState.FLAGGED
+                self.__flags_placed += 1
             case TileState.FLAGGED:
                 new_state = (
                     TileState.QUESTIONED if ENABLE_QUESTIONED else TileState.COVERED
                 )
+                self.__flags_placed -= 1
             case TileState.QUESTIONED:
                 new_state = TileState.COVERED
             case TileState.UNCOVERED:
@@ -169,3 +176,8 @@ class MinesweeperGame:
 
         if self.__uncovered_tiles == (self.__cols * self.__rows) - self.__mine_count:
             self.__game_state = GameState.WON
+            for x in range(self.__cols):
+                for y in range(self.__rows):
+                    if self.grid[y][x].state == TileState.COVERED:
+                        self.grid[y][x].state = TileState.FLAGGED
+                        self.__flags_placed += 1

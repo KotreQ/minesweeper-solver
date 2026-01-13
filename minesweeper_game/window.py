@@ -133,6 +133,47 @@ def get_face_texture_(
             return TEXTURES.FACES.WINNER
 
 
+COUNTER_TEXTURES = [
+    TEXTURES.COUNTER.V0,
+    TEXTURES.COUNTER.V1,
+    TEXTURES.COUNTER.V2,
+    TEXTURES.COUNTER.V3,
+    TEXTURES.COUNTER.V4,
+    TEXTURES.COUNTER.V5,
+    TEXTURES.COUNTER.V6,
+    TEXTURES.COUNTER.V7,
+    TEXTURES.COUNTER.V8,
+    TEXTURES.COUNTER.V9,
+    TEXTURES.COUNTER.MINUS,
+]
+
+
+def get_counter_graphics(offset: tuple[int, int], value: int):
+    assert -99 <= value <= 999
+
+    x_offset, y_offset = offset
+    chars = [0, 0, 0]
+
+    if value < 0:
+        value = -value
+        chars[0] = 10  # minus
+
+    pos = 2
+    while value:
+        chars[pos] = value % 10
+        value //= 10
+        pos -= 1
+
+    counter_graphics = []
+
+    for i in range(3):
+        pos = x_offset + i * TILE_WIDTH, y_offset
+        txt = COUNTER_TEXTURES[chars[i]]
+        counter_graphics.append((txt, pos))
+
+    return counter_graphics
+
+
 class MinesweeperWindow:
     def __init__(self, cols, rows, mine_count):
         self.__cols = cols
@@ -164,6 +205,8 @@ class MinesweeperWindow:
             ((1 + self.__game.cols + 1) * TILE_WIDTH - 28) // 2,
             1 * TILE_WIDTH + 10,
         )
+
+        self.__mine_counter_pos = (1.5 * TILE_WIDTH, 1.5 * TILE_WIDTH)
 
         pygame.display.set_caption(WINDOW_CAPTION)
 
@@ -249,9 +292,15 @@ class MinesweeperWindow:
             self.__game.state, bool(self.__pressed), self.__pressed_face
         )
 
+        unplaced_flags = self.__game.mine_count - self.__game.flags_placed
+        mine_counter_graphics = get_counter_graphics(
+            self.__mine_counter_pos, unplaced_flags
+        )
+
         self.__surface.blits(self.__board_graphics, doreturn=False)
         self.__surface.blits(grid_graphics, doreturn=False)
         self.__surface.blit(face_texture, self.__face_pos)
+        self.__surface.blits(mine_counter_graphics)
 
         pygame.display.update()
 
