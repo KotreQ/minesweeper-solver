@@ -43,9 +43,9 @@ class MinesweeperGame:
         assert rows <= 24
         assert mine_count <= (cols - 1) * (rows - 1)
 
-        self.cols = cols
-        self.rows = rows
-        self.mine_count = mine_count
+        self.__cols = cols
+        self.__rows = rows
+        self.__mine_count = mine_count
         self.grid = [[Tile() for _ in range(cols)] for _ in range(rows)]
         self.__mines_placed = False
 
@@ -61,13 +61,25 @@ class MinesweeperGame:
     def uncovered_tiles(self):
         return self.__uncovered_tiles
 
+    @property
+    def cols(self):
+        return self.__cols
+
+    @property
+    def rows(self):
+        return self.__rows
+    
+    @property
+    def mine_count(self):
+        return self.__mine_count
+
     def __place_mine(self, x, y):
         if self.grid[y][x].is_mine:
             raise ValueError(f"Mine is already at ({x},{y})")
 
         self.grid[y][x].is_mine = True
 
-        for nx, ny in get_neighbours(x, y, self.cols, self.rows):
+        for nx, ny in get_neighbours(x, y, self.__cols, self.__rows):
             self.grid[ny][nx].value += 1
 
         return True
@@ -76,11 +88,11 @@ class MinesweeperGame:
         safe_spots = set(safe_spots)
         potential_spots = [
             (x, y)
-            for x in range(self.cols)
-            for y in range(self.rows)
+            for x in range(self.__cols)
+            for y in range(self.__rows)
             if (x, y) not in safe_spots
         ]
-        mine_spots = random.sample(potential_spots, self.mine_count)
+        mine_spots = random.sample(potential_spots, self.__mine_count)
 
         for x, y in mine_spots:
             self.__place_mine(x, y)
@@ -123,7 +135,7 @@ class MinesweeperGame:
         if tile.state == TileState.UNCOVERED:
             unflagged_neighbours = []
             flagged_neighbours = 0
-            for x, y in get_neighbours(x, y, self.cols, self.rows):
+            for x, y in get_neighbours(x, y, self.__cols, self.__rows):
                 if self.grid[y][x].state == TileState.FLAGGED:
                     flagged_neighbours += 1
                 elif self.grid[y][x].state != TileState.UNCOVERED:
@@ -148,12 +160,12 @@ class MinesweeperGame:
                 return
 
             if cur_tile.value == 0:
-                for nx, ny in get_neighbours(cur_x, cur_y, self.cols, self.rows):
+                for nx, ny in get_neighbours(cur_x, cur_y, self.__cols, self.__rows):
                     if self.grid[ny][nx].state in (
                         TileState.COVERED,
                         TileState.QUESTIONED,
                     ):
                         to_uncover.append((nx, ny))
 
-        if self.__uncovered_tiles == (self.cols * self.rows) - self.mine_count:
+        if self.__uncovered_tiles == (self.__cols * self.__rows) - self.__mine_count:
             self.__game_state = GameState.WON
