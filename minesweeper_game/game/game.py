@@ -2,30 +2,10 @@ import random
 from collections import deque
 from enum import Enum, auto
 
-
-class TileState(Enum):
-    COVERED = auto()
-    FLAGGED = auto()
-    QUESTIONED = auto()
-    UNCOVERED = auto()
-
+from .tile import Tile, TileState
+from .utils import get_neighbours
 
 ENABLE_QUESTIONED = False
-
-
-class Tile:
-    def __init__(self):
-        self.is_mine = False
-        self.value = 0
-        self.state = TileState.COVERED
-
-
-def get_neighbours(x, y, w, h):
-    for i in range(x - 1, x + 2):
-        for j in range(y - 1, y + 2):
-            if i < 0 or j < 0 or i >= w or j >= h or (i == x and j == y):
-                continue
-            yield i, j
 
 
 class GameState(Enum):
@@ -73,7 +53,7 @@ class MinesweeperGame:
     @property
     def rows(self):
         return self.__rows
-    
+
     @property
     def mine_count(self):
         return self.__mine_count

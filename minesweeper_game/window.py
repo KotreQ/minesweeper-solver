@@ -1,6 +1,8 @@
 import pygame
 
-from .game import GameState, MinesweeperGame, Tile, TileState, get_neighbours
+from .game.game import GameState, MinesweeperGame
+from .game.tile import Tile, TileState
+from .game.utils import get_neighbours
 from .textures import TEXTURES
 
 WINDOW_CAPTION = "Minesweeper by KotreQ"
