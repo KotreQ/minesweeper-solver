@@ -4,7 +4,6 @@ from enum import Enum, auto
 class TileState(Enum):
     COVERED = auto()
     FLAGGED = auto()
-    QUESTIONED = auto()
     UNCOVERED = auto()
 
 

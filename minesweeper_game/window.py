@@ -81,15 +81,6 @@ def get_tile_texture_(tile: Tile, is_pressed: bool, game_state: GameState):
         case TileState.FLAGGED, _, _, _:
             return TEXTURES.TILES.FLAGGED
 
-        case TileState.QUESTIONED, True, _, GameState.RUNNING:
-            return TEXTURES.TILES.PRESSED_QUESTION
-        case TileState.QUESTIONED, _, True, GameState.LOST:
-            return TEXTURES.TILES.PRESSED_MINE
-        case TileState.QUESTIONED, _, True, GameState.LOST:
-            return TEXTURES.TILES.FLAGGED
-        case TileState.QUESTIONED, _, _, _:
-            return TEXTURES.TILES.QUESTION
-
         case TileState.UNCOVERED, _, False, _:
             return TILE_VALUE_TEXTURES[tile.value]
         case TileState.UNCOVERED, _, True, GameState.LOST:
@@ -273,7 +264,7 @@ class MinesweeperWindow:
                             case 1:
                                 self.__game.uncover(*pressed_tile)
                             case 3:
-                                self.__game.cycle_covered_state(*pressed_tile)
+                                self.__game.toggle_flag(*pressed_tile)
 
                     elif pressed_face:
                         self.__init_game()

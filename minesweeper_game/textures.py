@@ -71,8 +71,6 @@ class TEXTURES:
         COVERED = TILES[9]
         FLAGGED = TILES[10]
         FALSEMINE = TILES[11]
-        PRESSED_QUESTION = TILES[12]
-        QUESTION = TILES[13]
         PRESSED_MINE = TILES[14]
         BLOWN_MINE = TILES[15]
 

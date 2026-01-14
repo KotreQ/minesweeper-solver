@@ -5,8 +5,6 @@ from enum import Enum, auto
 from .tile import Tile, TileState
 from .utils import get_neighbours
 
-ENABLE_QUESTIONED = False
-
 
 class GameState(Enum):
     RUNNING = auto()
@@ -82,7 +80,7 @@ class MinesweeperGame:
         for x, y in mine_spots:
             self.__place_mine(x, y)
 
-    def cycle_covered_state(self, x, y):
+    def toggle_flag(self, x, y):
         if self.__game_state != GameState.RUNNING:
             return
 
@@ -93,12 +91,8 @@ class MinesweeperGame:
                 new_state = TileState.FLAGGED
                 self.__flags_placed += 1
             case TileState.FLAGGED:
-                new_state = (
-                    TileState.QUESTIONED if ENABLE_QUESTIONED else TileState.COVERED
-                )
-                self.__flags_placed -= 1
-            case TileState.QUESTIONED:
                 new_state = TileState.COVERED
+                self.__flags_placed -= 1
             case TileState.UNCOVERED:
                 return
 
@@ -148,10 +142,7 @@ class MinesweeperGame:
 
             if cur_tile.value == 0:
                 for nx, ny in get_neighbours(cur_x, cur_y, self.__cols, self.__rows):
-                    if self.grid[ny][nx].state in (
-                        TileState.COVERED,
-                        TileState.QUESTIONED,
-                    ):
+                    if self.grid[ny][nx].state == TileState.COVERED:
                         to_uncover.append((nx, ny))
 
         if self.__uncovered_tiles == (self.__cols * self.__rows) - self.__mine_count:
