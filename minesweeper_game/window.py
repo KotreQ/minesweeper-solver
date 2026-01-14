@@ -20,7 +20,7 @@ def generate_board_graphics_(cols: int, rows: int):
 
     for row in range(tile_rows):
         for col in range(tile_cols):
-            txt = TEXTURES.BORDER.FILL
+            txt = TEXTURES["border"]["fill"]
 
             if row in horizontal_rows and col in vertical_cols:
                 corner_x = vertical_cols.index(col)
@@ -28,65 +28,50 @@ def generate_board_graphics_(cols: int, rows: int):
 
                 match corner_x, corner_y:
                     case 0, 0:
-                        txt = TEXTURES.BORDER.BR
+                        txt = TEXTURES["border"]["br"]
                     case 0, 1:
-                        txt = TEXTURES.BORDER.TBR
+                        txt = TEXTURES["border"]["tbr"]
                     case 0, 2:
-                        txt = TEXTURES.BORDER.TR
+                        txt = TEXTURES["border"]["tr"]
                     case 1, 0:
-                        txt = TEXTURES.BORDER.BL
+                        txt = TEXTURES["border"]["bl"]
                     case 1, 1:
-                        txt = TEXTURES.BORDER.TBL
+                        txt = TEXTURES["border"]["tbl"]
                     case 1, 2:
-                        txt = TEXTURES.BORDER.TL
+                        txt = TEXTURES["border"]["tl"]
 
             elif row in horizontal_rows:
-                txt = TEXTURES.BORDER.LR
+                txt = TEXTURES["border"]["lr"]
             elif col in vertical_cols:
-                txt = TEXTURES.BORDER.TB
+                txt = TEXTURES["border"]["tb"]
             else:
-                txt = TEXTURES.BORDER.FILL
+                txt = TEXTURES["border"]["fill"]
 
             board_graphics.append((txt, (col * TILE_WIDTH, row * TILE_WIDTH)))
 
     return board_graphics
 
 
-TILE_VALUE_TEXTURES = [
-    TEXTURES.TILES.V0,
-    TEXTURES.TILES.V1,
-    TEXTURES.TILES.V2,
-    TEXTURES.TILES.V3,
-    TEXTURES.TILES.V4,
-    TEXTURES.TILES.V5,
-    TEXTURES.TILES.V6,
-    TEXTURES.TILES.V7,
-    TEXTURES.TILES.V8,
-]
-
-
-def get_tile_texture_(tile: Tile, is_pressed: bool, game_state: GameState):
+def get_tile_texture_(tile: Tile, is_pressed: bool, game_state: GameState) -> str:
     match tile.state, is_pressed, tile.is_mine, game_state:
         case TileState.COVERED, True, _, GameState.RUNNING:
-            return TEXTURES.TILES.V0
+            return TEXTURES["tiles"]["0"]
         case TileState.COVERED, _, True, GameState.LOST:
-            return TEXTURES.TILES.PRESSED_MINE
+            return TEXTURES["tiles"]["mine"]
         case TileState.COVERED, _, True, GameState.WON:
-            return TEXTURES.TILES.FLAGGED
+            return TEXTURES["tiles"]["flagged"]
         case TileState.COVERED, _, _, _:
-            return TEXTURES.TILES.COVERED
+            return TEXTURES["tiles"]["covered"]
 
         case TileState.FLAGGED, _, False, GameState.LOST:
-            return TEXTURES.TILES.FALSEMINE
+            return TEXTURES["tiles"]["false_mine"]
         case TileState.FLAGGED, _, _, _:
-            return TEXTURES.TILES.FLAGGED
+            return TEXTURES["tiles"]["flagged"]
 
         case TileState.UNCOVERED, _, False, _:
-            return TILE_VALUE_TEXTURES[tile.value]
+            return TEXTURES["tiles"][str(tile.value)]
         case TileState.UNCOVERED, _, True, GameState.LOST:
-            return TEXTURES.TILES.BLOWN_MINE
-        case TileState.UNCOVERED, _, True, GameState.RUNNING | GameState.WON:
-            return TEXTURES.ERROR
+            return TEXTURES["tiles"]["blown_mine"]
 
 
 def generate_grid_graphics_(
@@ -115,29 +100,29 @@ def get_face_texture_(
 ):
     match game_state, any_tile_pressed, face_pressed:
         case GameState.RUNNING, False, False:
-            return TEXTURES.FACES.HAPPY
+            return TEXTURES["faces"]["happy"]
         case GameState.RUNNING, True, _:
-            return TEXTURES.FACES.CAUTIOUS
+            return TEXTURES["faces"]["cautious"]
         case _, _, True:
-            return TEXTURES.FACES.PRESSED_HAPPY
+            return TEXTURES["faces"]["pressed"]
         case GameState.LOST, _, False:
-            return TEXTURES.FACES.DEAD
+            return TEXTURES["faces"]["dead"]
         case GameState.WON, _, False:
-            return TEXTURES.FACES.WINNER
+            return TEXTURES["faces"]["winner"]
 
 
 COUNTER_TEXTURES = [
-    TEXTURES.COUNTER.V0,
-    TEXTURES.COUNTER.V1,
-    TEXTURES.COUNTER.V2,
-    TEXTURES.COUNTER.V3,
-    TEXTURES.COUNTER.V4,
-    TEXTURES.COUNTER.V5,
-    TEXTURES.COUNTER.V6,
-    TEXTURES.COUNTER.V7,
-    TEXTURES.COUNTER.V8,
-    TEXTURES.COUNTER.V9,
-    TEXTURES.COUNTER.MINUS,
+    TEXTURES["counter"]["0"],
+    TEXTURES["counter"]["1"],
+    TEXTURES["counter"]["2"],
+    TEXTURES["counter"]["3"],
+    TEXTURES["counter"]["4"],
+    TEXTURES["counter"]["5"],
+    TEXTURES["counter"]["6"],
+    TEXTURES["counter"]["7"],
+    TEXTURES["counter"]["8"],
+    TEXTURES["counter"]["9"],
+    TEXTURES["counter"]["minus"],
 ]
 
 
