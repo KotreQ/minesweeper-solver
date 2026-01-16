@@ -2,9 +2,9 @@ import pygame
 
 from .window import MinesweeperWindow
 
-COLS = 16
+COLS = 30
 ROWS = 16
-MINES = 40
+MINES = 99
 
 
 def main() -> None:
