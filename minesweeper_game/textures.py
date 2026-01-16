@@ -27,4 +27,8 @@ def load_textures():
 
             TEXTURES[dir_name][txt_name] = txt
 
+
 load_textures()
+
+
+TILE_WIDTH = TEXTURES["tiles"]["0"].get_width()
