@@ -1,4 +1,5 @@
 import random
+import time
 from collections import deque
 from enum import Enum, auto
 
@@ -26,6 +27,9 @@ class MinesweeperGame:
         self.__mine_count = mine_count
         self.grid = [[Tile() for _ in range(cols)] for _ in range(rows)]
         self.__mines_placed = False
+
+        self.__time_started = None
+        self.__time_frozen = None
 
         self.__game_state = GameState.RUNNING
 
@@ -55,6 +59,14 @@ class MinesweeperGame:
     @property
     def mine_count(self):
         return self.__mine_count
+
+    @property
+    def elapsed_time(self):
+        if self.__time_frozen is not None:
+            return self.__time_frozen
+        if self.__time_started is None:
+            return 0
+        return time.time() - self.__time_started
 
     def __place_mine(self, x, y):
         if self.grid[y][x].is_mine:
@@ -111,6 +123,9 @@ class MinesweeperGame:
             self.__place_mines([(x, y)])
             self.__mines_placed = True
 
+        if self.__time_started is None:
+            self.__time_started = time.time()
+
         to_uncover = deque()
 
         if tile.state == TileState.UNCOVERED:
@@ -138,6 +153,7 @@ class MinesweeperGame:
 
             if cur_tile.is_mine:
                 self.__game_state = GameState.LOST
+                self.__time_frozen = self.elapsed_time
                 return
 
             if cur_tile.value == 0:
@@ -147,6 +163,7 @@ class MinesweeperGame:
 
         if self.__uncovered_tiles == (self.__cols * self.__rows) - self.__mine_count:
             self.__game_state = GameState.WON
+            self.__time_frozen = self.elapsed_time
             for x in range(self.__cols):
                 for y in range(self.__rows):
                     if self.grid[y][x].state == TileState.COVERED:

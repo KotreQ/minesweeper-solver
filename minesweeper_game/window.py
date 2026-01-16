@@ -152,6 +152,83 @@ def get_counter_graphics(offset: tuple[int, int], value: int):
     return counter_graphics
 
 
+def get_counter_border_graphics(counter_offset: tuple[int, int]):
+    x_offset, y_offset = counter_offset
+
+    border_width = TILE_WIDTH // 2
+
+    counter_border_graphics = []
+
+    counter_border_graphics.append(
+        (
+            TEXTURES["counter_border"]["left"],
+            (x_offset - border_width, y_offset + border_width),
+        )
+    )
+    counter_border_graphics.append(
+        (
+            TEXTURES["counter_border"]["right"],
+            (x_offset - border_width + 3 * TILE_WIDTH, y_offset + border_width),
+        )
+    )
+
+    for col in range(2):
+        counter_border_graphics.append(
+            (
+                TEXTURES["counter_border"]["top"],
+                (x_offset + border_width + col * TILE_WIDTH, y_offset - border_width),
+            )
+        )
+        counter_border_graphics.append(
+            (
+                TEXTURES["counter_border"]["bottom"],
+                (
+                    x_offset + border_width + col * TILE_WIDTH,
+                    y_offset - border_width + 2 * TILE_WIDTH,
+                ),
+            )
+        )
+
+    counter_border_graphics.append(
+        (
+            TEXTURES["counter_border"]["top_left"],
+            (
+                x_offset - border_width,
+                y_offset - border_width,
+            ),
+        )
+    )
+    counter_border_graphics.append(
+        (
+            TEXTURES["counter_border"]["top_right"],
+            (
+                x_offset - border_width + 3 * TILE_WIDTH,
+                y_offset - border_width,
+            ),
+        )
+    )
+    counter_border_graphics.append(
+        (
+            TEXTURES["counter_border"]["bottom_left"],
+            (
+                x_offset - border_width,
+                y_offset - border_width + 2 * TILE_WIDTH,
+            ),
+        )
+    )
+    counter_border_graphics.append(
+        (
+            TEXTURES["counter_border"]["bottom_right"],
+            (
+                x_offset - border_width + 3 * TILE_WIDTH,
+                y_offset - border_width + 2 * TILE_WIDTH,
+            ),
+        )
+    )
+
+    return counter_border_graphics
+
+
 class MinesweeperWindow:
     def __init__(self, cols, rows, mine_count):
         self.__cols = cols
@@ -184,7 +261,11 @@ class MinesweeperWindow:
             1 * TILE_WIDTH + 10,
         )
 
-        self.__mine_counter_pos = (1.5 * TILE_WIDTH, 1.5 * TILE_WIDTH)
+        self.__mine_counter_pos = (TILE_WIDTH * 3 // 2, TILE_WIDTH * 3 // 2)
+        self.__time_counter_pos = (
+            window_width - TILE_WIDTH * 3 // 2 - TILE_WIDTH * 3,
+            TILE_WIDTH * 3 // 2,
+        )
 
         pygame.display.set_caption(WINDOW_CAPTION)
 
@@ -274,11 +355,24 @@ class MinesweeperWindow:
         mine_counter_graphics = get_counter_graphics(
             self.__mine_counter_pos, unplaced_flags
         )
+        time_counter_graphics = get_counter_graphics(
+            self.__time_counter_pos, int(min(self.__game.elapsed_time, 999))
+        )
+
+        mine_counter_border_graphics = get_counter_border_graphics(
+            self.__mine_counter_pos
+        )
+        time_counter_border_graphics = get_counter_border_graphics(
+            self.__time_counter_pos
+        )
 
         self.__surface.blits(self.__board_graphics, doreturn=False)
         self.__surface.blits(grid_graphics, doreturn=False)
+        self.__surface.blits(mine_counter_border_graphics, doreturn=False)
+        self.__surface.blits(mine_counter_graphics, doreturn=False)
+        self.__surface.blits(time_counter_border_graphics, doreturn=False)
+        self.__surface.blits(time_counter_graphics, doreturn=False)
         self.__surface.blit(face_texture, self.__face_pos)
-        self.__surface.blits(mine_counter_graphics)
 
         pygame.display.update()
 
