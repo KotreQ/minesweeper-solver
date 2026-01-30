@@ -17,12 +17,11 @@ FPS = 60
 
 
 class MinesweeperWindow:
-    def __init__(self, cols, rows, mine_count):
-        self.__cols = cols
-        self.__rows = rows
-        self.__mine_count = mine_count
+    def __init__(self, game_spec: MinesweeperGame | tuple[int, int, int]):
+        if not isinstance(game_spec, MinesweeperGame):
+            self.__game_spec = game_spec
 
-        self.__init_game()
+        self.__init_game(game_spec)
 
         self.__clock = pygame.time.Clock()
         self.__window_alive = True
@@ -31,8 +30,11 @@ class MinesweeperWindow:
         self.__pressed = set()
         self.__pressed_face = False
 
-    def __init_game(self):
-        self.__game = MinesweeperGame(self.__cols, self.__rows, self.__mine_count)
+    def __init_game(self, game_spec: MinesweeperGame | tuple[int, int, int]):
+        if isinstance(game_spec, MinesweeperGame):
+            self.__game = game_spec
+        else:
+            self.__game = MinesweeperGame(*game_spec)
 
         self.__board_graphics = generate_board_graphics_(
             self.__game.cols, self.__game.rows
@@ -101,7 +103,7 @@ class MinesweeperWindow:
                     # if pressed uncovered tile, highlight neighbours as pressed
                     x, y = pressed_tile
                     if self.__game.grid[y][x].state == TileState.UNCOVERED:
-                        for x, y in get_neighbours(x, y, self.__cols, self.__rows):
+                        for x, y in get_neighbours(x, y, self.__game.cols, self.__game.rows):
                             self.__pressed.add((x, y))
 
                 self.__pressed_face = pressed_face
@@ -120,7 +122,7 @@ class MinesweeperWindow:
                                 self.__game.toggle_flag(*pressed_tile)
 
                     elif pressed_face:
-                        self.__init_game()
+                        self.__init_game(self.__game_spec)
 
                 self.__pressed.clear()
                 self.__pressed_face = False

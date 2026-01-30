@@ -10,7 +10,7 @@ MINES = 99
 def main() -> None:
     pygame.init()
 
-    window = MinesweeperWindow(COLS, ROWS, MINES)
+    window = MinesweeperWindow((COLS, ROWS, MINES))
 
     running = True
     while running:
