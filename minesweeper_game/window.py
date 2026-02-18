@@ -4,11 +4,11 @@ from .game.game import GameState, MinesweeperGame
 from .game.tile import TileState
 from .game.utils import get_neighbours
 from .graphics import (
-    generate_board_graphics_,
-    generate_grid_graphics_,
+    generate_board_graphics,
+    generate_grid_graphics,
     get_counter_border_graphics,
     get_counter_graphics,
-    get_face_texture_,
+    get_face_texture,
 )
 from .textures import TILE_WIDTH
 
@@ -36,7 +36,7 @@ class MinesweeperWindow:
         else:
             self.__game = MinesweeperGame(*game_spec)
 
-        self.__board_graphics = generate_board_graphics_(
+        self.__board_graphics = generate_board_graphics(
             self.__game.cols, self.__game.rows
         )
 
@@ -132,11 +132,11 @@ class MinesweeperWindow:
         for event in pygame.event.get():
             self.__event_handler(event)
 
-        grid_graphics = generate_grid_graphics_(
+        grid_graphics = generate_grid_graphics(
             self.__game.grid, self.__pressed, self.__game.state
         )
 
-        face_texture = get_face_texture_(
+        face_texture = get_face_texture(
             self.__game.state, bool(self.__pressed), self.__pressed_face
         )
 

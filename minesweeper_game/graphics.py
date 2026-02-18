@@ -4,7 +4,7 @@ from .textures import TEXTURES, TILE_WIDTH
 
 
 
-def generate_board_graphics_(cols: int, rows: int):
+def generate_board_graphics(cols: int, rows: int):
     tile_rows = 1 + 3 + 1 + rows + 1
     tile_cols = 1 + cols + 1
     horizontal_rows = [0, 4, tile_rows - 1]
@@ -46,7 +46,7 @@ def generate_board_graphics_(cols: int, rows: int):
     return board_graphics
 
 
-def get_tile_texture_(tile: Tile, is_pressed: bool, game_state: GameState) -> str:
+def __get_tile_texture(tile: Tile, is_pressed: bool, game_state: GameState) -> str:
     match tile.state, is_pressed, tile.is_mine, game_state:
         case TileState.COVERED, True, _, GameState.RUNNING:
             return TEXTURES["tiles"]["0"]
@@ -68,7 +68,7 @@ def get_tile_texture_(tile: Tile, is_pressed: bool, game_state: GameState) -> st
             return TEXTURES["tiles"]["blown_mine"]
 
 
-def generate_grid_graphics_(
+def generate_grid_graphics(
     grid: list[list[Tile]], pressed: set[tuple[int, int]], game_state: GameState
 ):
     x_offset = (1) * TILE_WIDTH
@@ -82,14 +82,14 @@ def generate_grid_graphics_(
             x = j * TILE_WIDTH + x_offset
             is_pressed = (j, i) in pressed
 
-            txt = get_tile_texture_(tile, is_pressed, game_state)
+            txt = __get_tile_texture(tile, is_pressed, game_state)
 
             grid_graphics.append((txt, (x, y)))
 
     return grid_graphics
 
 
-def get_face_texture_(
+def get_face_texture(
     game_state: GameState, any_tile_pressed: bool, face_pressed: bool
 ):
     match game_state, any_tile_pressed, face_pressed:
