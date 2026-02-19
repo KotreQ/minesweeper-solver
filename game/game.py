@@ -25,7 +25,9 @@ class MinesweeperGame:
         self.__cols = cols
         self.__rows = rows
         self.__mine_count = mine_count
-        self.grid = [[Tile() for _ in range(cols)] for _ in range(rows)]
+        self.grid: list[list[Tile]] = [
+            [Tile() for _ in range(self.__cols)] for _ in range(self.__rows)
+        ]
         self.__mines_placed = False
 
         self.__time_started = None
@@ -69,13 +71,12 @@ class MinesweeperGame:
         return time.time() - self.__time_started
 
     def __place_mine(self, x, y):
-        if self.grid[y][x].is_mine:
+        success = self.grid[y][x]._mark_mine()
+        if not success:
             raise ValueError(f"Mine is already at ({x},{y})")
 
-        self.grid[y][x].is_mine = True
-
         for nx, ny in get_neighbours(x, y, self.__cols, self.__rows):
-            self.grid[ny][nx].value += 1
+            self.grid[ny][nx]._increase_value()
 
         return True
 
@@ -97,18 +98,7 @@ class MinesweeperGame:
             return
 
         tile = self.grid[y][x]
-
-        match tile.state:
-            case TileState.COVERED:
-                new_state = TileState.FLAGGED
-                self.__flags_placed += 1
-            case TileState.FLAGGED:
-                new_state = TileState.COVERED
-                self.__flags_placed -= 1
-            case TileState.UNCOVERED:
-                return
-
-        tile.state = new_state
+        tile.toggle_flag()
 
     def uncover(self, x, y):
         if self.__game_state != GameState.RUNNING:
@@ -128,17 +118,19 @@ class MinesweeperGame:
 
         to_uncover = deque()
 
-        if tile.state == TileState.UNCOVERED:
-            unflagged_neighbours = []
+        if (
+            tile.state == TileState.UNCOVERED
+        ):  # if current tile is already uncovered, try making a chord
+            covered_neighbours = []
             flagged_neighbours = 0
             for x, y in get_neighbours(x, y, self.__cols, self.__rows):
                 if self.grid[y][x].state == TileState.FLAGGED:
                     flagged_neighbours += 1
-                elif self.grid[y][x].state != TileState.UNCOVERED:
-                    unflagged_neighbours.append((x, y))
+                elif self.grid[y][x].state == TileState.COVERED:
+                    covered_neighbours.append((x, y))
 
             if flagged_neighbours == tile.value:
-                to_uncover.extend(unflagged_neighbours)
+                to_uncover.extend(covered_neighbours)
 
         else:
             to_uncover.append((x, y))
@@ -147,13 +139,13 @@ class MinesweeperGame:
             cur_x, cur_y = to_uncover.pop()
             cur_tile = self.grid[cur_y][cur_x]
 
-            if cur_tile.state != TileState.UNCOVERED:
-                self.__uncovered_tiles += 1
-                cur_tile.state = TileState.UNCOVERED
+            success = cur_tile.uncover()
 
-            if cur_tile.is_mine:
-                self.__game_state = GameState.LOST
-                self.__time_frozen = self.elapsed_time
+            if success:
+                self.__uncovered_tiles += 1
+
+            if cur_tile.state == TileState.BLOWN_MINE:
+                self.__mark_game_finished(False)
                 return
 
             if cur_tile.value == 0:
@@ -162,10 +154,20 @@ class MinesweeperGame:
                         to_uncover.append((nx, ny))
 
         if self.__uncovered_tiles == (self.__cols * self.__rows) - self.__mine_count:
+            self.__mark_game_finished(True)
+            return
+
+
+    def __mark_game_finished(self, won: bool):
+        self.__time_frozen = self.elapsed_time
+
+        if won:
+            self.__flags_placed = self.__mine_count
             self.__game_state = GameState.WON
-            self.__time_frozen = self.elapsed_time
+        else:
+            self.__game_state = GameState.LOST
+
+        for y in range(self.__rows):
             for x in range(self.__cols):
-                for y in range(self.__rows):
-                    if self.grid[y][x].state == TileState.COVERED:
-                        self.grid[y][x].state = TileState.FLAGGED
-                        self.__flags_placed += 1
+                tile = self.grid[y][x]
+                tile._mark_finished_game(won)
