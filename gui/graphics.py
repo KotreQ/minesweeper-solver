@@ -1,7 +1,5 @@
-from .game.game import GameState
-from .game.tile import Tile, TileState
+from game import GameState, Tile, TileState
 from .textures import TEXTURES, TILE_WIDTH
-
 
 
 def generate_board_graphics(cols: int, rows: int):
@@ -46,26 +44,35 @@ def generate_board_graphics(cols: int, rows: int):
     return board_graphics
 
 
-def __get_tile_texture(tile: Tile, is_pressed: bool, game_state: GameState) -> str:
-    match tile.state, is_pressed, tile.is_mine, game_state:
-        case TileState.COVERED, True, _, GameState.RUNNING:
-            return TEXTURES["tiles"]["0"]
-        case TileState.COVERED, _, True, GameState.LOST:
-            return TEXTURES["tiles"]["mine"]
-        case TileState.COVERED, _, True, GameState.WON:
-            return TEXTURES["tiles"]["flagged"]
-        case TileState.COVERED, _, _, _:
-            return TEXTURES["tiles"]["covered"]
+TILE_TEXTURES = {
+    TileState.SAFE_0: TEXTURES["tiles"]["0"],
+    TileState.SAFE_1: TEXTURES["tiles"]["1"],
+    TileState.SAFE_2: TEXTURES["tiles"]["2"],
+    TileState.SAFE_3: TEXTURES["tiles"]["3"],
+    TileState.SAFE_4: TEXTURES["tiles"]["4"],
+    TileState.SAFE_5: TEXTURES["tiles"]["5"],
+    TileState.SAFE_6: TEXTURES["tiles"]["6"],
+    TileState.SAFE_7: TEXTURES["tiles"]["7"],
+    TileState.SAFE_8: TEXTURES["tiles"]["8"],
+    TileState.COVERED: TEXTURES["tiles"]["covered"],
+    TileState.FLAGGED: TEXTURES["tiles"]["flagged"],
+    TileState.MINE: TEXTURES["tiles"]["mine"],
+    TileState.BLOWN_MINE: TEXTURES["tiles"]["blown_mine"],
+    TileState.FALSE_FLAG: TEXTURES["tiles"]["false_mine"],
+}
 
-        case TileState.FLAGGED, _, False, GameState.LOST:
-            return TEXTURES["tiles"]["false_mine"]
-        case TileState.FLAGGED, _, _, _:
-            return TEXTURES["tiles"]["flagged"]
 
-        case TileState.UNCOVERED, _, False, _:
-            return TEXTURES["tiles"][str(tile.value)]
-        case TileState.UNCOVERED, _, True, GameState.LOST:
-            return TEXTURES["tiles"]["blown_mine"]
+def __get_tile_texture(
+    tile_state: TileState, is_pressed: bool, game_state: GameState
+) -> str:
+    if (
+        tile_state == TileState.COVERED
+        and is_pressed
+        and game_state == GameState.RUNNING
+    ):
+        return TILE_TEXTURES[TileState.SAFE_0]
+
+    return TILE_TEXTURES[tile_state]
 
 
 def generate_grid_graphics(
@@ -89,9 +96,7 @@ def generate_grid_graphics(
     return grid_graphics
 
 
-def get_face_texture(
-    game_state: GameState, any_tile_pressed: bool, face_pressed: bool
-):
+def get_face_texture(game_state: GameState, any_tile_pressed: bool, face_pressed: bool):
     match game_state, any_tile_pressed, face_pressed:
         case GameState.RUNNING, False, False:
             return TEXTURES["faces"]["happy"]
