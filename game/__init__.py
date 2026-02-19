@@ -1,1 +1,2 @@
-from .game import MinesweeperGame
+from .game import MinesweeperGame, GameState
+from .tile import Tile, TileState
