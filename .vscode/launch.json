@@ -9,7 +9,7 @@
             "name": "Minesweeper Game",
             "type": "debugpy",
             "request": "launch",
-            "module": "minesweeper_game"
+            "module": "gui"
         }
     ]
 }
