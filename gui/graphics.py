@@ -58,7 +58,7 @@ TILE_TEXTURES = {
     TileState.FLAGGED: TEXTURES["tiles"]["flagged"],
     TileState.MINE: TEXTURES["tiles"]["mine"],
     TileState.BLOWN_MINE: TEXTURES["tiles"]["blown_mine"],
-    TileState.FALSE_FLAG: TEXTURES["tiles"]["false_mine"],
+    TileState.FALSE_FLAG: TEXTURES["tiles"]["false_flag"],
 }
 
 
