@@ -1,8 +1,8 @@
 import pygame
 
-from .game.game import GameState, MinesweeperGame
-from .game.tile import TileState
-from .game.utils import get_neighbours
+from game import GameState, MinesweeperGame, TileState
+from game.utils import get_neighbours
+
 from .graphics import (
     generate_board_graphics,
     generate_grid_graphics,
@@ -102,8 +102,10 @@ class MinesweeperWindow:
 
                     # if pressed uncovered tile, highlight neighbours as pressed
                     x, y = pressed_tile
-                    if self.__game.grid[y][x].state == TileState.UNCOVERED:
-                        for x, y in get_neighbours(x, y, self.__game.cols, self.__game.rows):
+                    if self.__game.grid[y][x].is_uncovered:
+                        for x, y in get_neighbours(
+                            x, y, self.__game.cols, self.__game.rows
+                        ):
                             self.__pressed.add((x, y))
 
                 self.__pressed_face = pressed_face

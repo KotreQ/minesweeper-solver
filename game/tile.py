@@ -29,6 +29,17 @@ class Tile:
     @property
     def state(self) -> TileState:
         return self.__state
+    
+    @property
+    def is_uncovered(self) -> bool:
+        return self.__state.value <= 8
+
+    @property
+    def value(self) -> int | None:
+        if self.is_uncovered:
+            return self.__value
+        else:
+            return None
 
     def uncover(self) -> tuple[bool, bool]:
         """Uncovers the tile

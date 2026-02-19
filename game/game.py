@@ -118,9 +118,7 @@ class MinesweeperGame:
 
         to_uncover = deque()
 
-        if (
-            tile.state == TileState.UNCOVERED
-        ):  # if current tile is already uncovered, try making a chord
+        if tile.is_uncovered:  # try making a chord
             covered_neighbours = []
             flagged_neighbours = 0
             for x, y in get_neighbours(x, y, self.__cols, self.__rows):
@@ -148,7 +146,7 @@ class MinesweeperGame:
                 self.__mark_game_finished(False)
                 return
 
-            if cur_tile.value == 0:
+            if cur_tile.state == TileState.SAFE_0:
                 for nx, ny in get_neighbours(cur_x, cur_y, self.__cols, self.__rows):
                     if self.grid[ny][nx].state == TileState.COVERED:
                         to_uncover.append((nx, ny))
@@ -156,7 +154,6 @@ class MinesweeperGame:
         if self.__uncovered_tiles == (self.__cols * self.__rows) - self.__mine_count:
             self.__mark_game_finished(True)
             return
-
 
     def __mark_game_finished(self, won: bool):
         self.__time_frozen = self.elapsed_time

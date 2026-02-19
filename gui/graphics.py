@@ -89,7 +89,7 @@ def generate_grid_graphics(
             x = j * TILE_WIDTH + x_offset
             is_pressed = (j, i) in pressed
 
-            txt = __get_tile_texture(tile, is_pressed, game_state)
+            txt = __get_tile_texture(tile.state, is_pressed, game_state)
 
             grid_graphics.append((txt, (x, y)))
 
