@@ -3,14 +3,13 @@ from collections import deque
 import numpy as np
 
 
-def generate_frontier(grid, rows, cols):
-    uncovered = [[cell.is_uncovered for cell in row] for row in grid]
-    uncovered = np.array(uncovered, np.bool_)
-
+def generate_frontier(uncovered):
     padded = np.pad(uncovered, 1, "edge")
 
-    max_pool = np.zeros((rows, cols), np.bool_)
-    min_pool = np.ones((rows, cols), np.bool_)
+    rows, cols = uncovered.shape
+
+    max_pool = np.zeros_like(uncovered, np.bool_)
+    min_pool = np.ones_like(uncovered, np.bool_)
 
     for dy in (-1, 0, 1):
         for dx in (-1, 0, 1):
@@ -29,11 +28,11 @@ def generate_frontier(grid, rows, cols):
     return revealed_frontier, covered_frontier
 
 
-def flood_fill_sort(arr: np.ndarray):
+def flood_fill_sort(arr):
     rows, cols = arr.shape
     result = []
 
-    visited = np.zeros((rows, cols), np.bool_)
+    visited = np.zeros_like(arr, np.bool_)
 
     NEIGHBOURS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
