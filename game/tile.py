@@ -35,11 +35,16 @@ class Tile:
         return self.__state.value <= 8
 
     @property
-    def value(self) -> int | None:
+    def value(self) -> int:
+        """Returns the value of the tile if it's revealed, -1 otherwise
+
+        Returns:
+            int: _description_
+        """
         if self.is_revealed:
             return self.__value
         else:
-            return None
+            return -1
 
     def uncover(self) -> tuple[bool, bool]:
         """Uncovers the tile
