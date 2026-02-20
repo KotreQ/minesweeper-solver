@@ -100,9 +100,9 @@ class MinesweeperWindow:
                 ):  # if finished, only face is updated, the blown mine stays marked as pressed
                     self.__pressed.add(pressed_tile)
 
-                    # if pressed uncovered tile, highlight neighbours as pressed
+                    # if pressed revealed tile, highlight neighbours as pressed
                     x, y = pressed_tile
-                    if self.__game.grid[y][x].is_uncovered:
+                    if self.__game.grid[y][x].is_revealed:
                         for x, y in get_neighbours(
                             x, y, self.__game.cols, self.__game.rows
                         ):

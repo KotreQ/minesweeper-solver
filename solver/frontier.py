@@ -3,13 +3,13 @@ from collections import deque
 import numpy as np
 
 
-def generate_frontier(uncovered):
-    padded = np.pad(uncovered, 1, "edge")
+def generate_frontier(revealed):
+    padded = np.pad(revealed, 1, "edge")
 
-    rows, cols = uncovered.shape
+    rows, cols = revealed.shape
 
-    max_pool = np.zeros_like(uncovered, np.bool_)
-    min_pool = np.ones_like(uncovered, np.bool_)
+    max_pool = np.zeros_like(revealed, np.bool_)
+    min_pool = np.ones_like(revealed, np.bool_)
 
     for dy in (-1, 0, 1):
         for dx in (-1, 0, 1):
@@ -19,8 +19,8 @@ def generate_frontier(uncovered):
 
     border_mask = max_pool != min_pool
 
-    revealed_frontier = border_mask & uncovered
-    covered_frontier = border_mask & ~uncovered
+    revealed_frontier = border_mask & revealed
+    covered_frontier = border_mask & ~revealed
 
     revealed_frontier = flood_fill_sort(revealed_frontier)
     covered_frontier = flood_fill_sort(covered_frontier)

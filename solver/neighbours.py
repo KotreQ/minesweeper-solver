@@ -1,11 +1,11 @@
 import numpy as np
 
 
-def get_uncovered_neighbours(uncovered):
-    padded = np.pad(uncovered, 1, "constant")
+def get_revealed_neighbours(revealed):
+    padded = np.pad(revealed, 1, "constant")
 
-    rows, cols = uncovered.shape
-    neighbours = np.zeros_like(uncovered, np.uint8)
+    rows, cols = revealed.shape
+    neighbours = np.zeros_like(revealed, np.uint8)
 
     for dy in (-1, 0, 1):
         for dx in (-1, 0, 1):

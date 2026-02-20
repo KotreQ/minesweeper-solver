@@ -35,7 +35,7 @@ class MinesweeperGame:
 
         self.__game_state = GameState.RUNNING
 
-        self.__uncovered_tiles = 0
+        self.__revealed_tiles = 0
         self.__flags_placed = 0
 
     @property
@@ -43,8 +43,8 @@ class MinesweeperGame:
         return self.__game_state
 
     @property
-    def uncovered_tiles(self):
-        return self.__uncovered_tiles
+    def revealed_tiles(self):
+        return self.__revealed_tiles
 
     @property
     def flags_placed(self):
@@ -118,7 +118,7 @@ class MinesweeperGame:
 
         to_uncover = deque()
 
-        if tile.is_uncovered:  # try making a chord
+        if tile.is_revealed:  # try making a chord
             covered_neighbours = []
             flagged_neighbours = 0
             for x, y in get_neighbours(x, y, self.__cols, self.__rows):
@@ -140,7 +140,7 @@ class MinesweeperGame:
             success = cur_tile.uncover()
 
             if success:
-                self.__uncovered_tiles += 1
+                self.__revealed_tiles += 1
 
             if cur_tile.state == TileState.BLOWN_MINE:
                 self.__mark_game_finished(False)
@@ -151,7 +151,7 @@ class MinesweeperGame:
                     if self.grid[ny][nx].state == TileState.COVERED:
                         to_uncover.append((nx, ny))
 
-        if self.__uncovered_tiles == (self.__cols * self.__rows) - self.__mine_count:
+        if self.__revealed_tiles == (self.__cols * self.__rows) - self.__mine_count:
             self.__mark_game_finished(True)
             return
 

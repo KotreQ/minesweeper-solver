@@ -2,10 +2,10 @@ import random
 
 from game.game import GameState, MinesweeperGame
 from game.utils import print_grid
-from solver.uncovered import get_uncovered_grid
+from solver.revealed import get_revealed_grid
 
 from .frontier import generate_frontier
-from .neighbours import get_all_neighbours, get_uncovered_neighbours
+from .neighbours import get_all_neighbours, get_revealed_neighbours
 
 
 class MinesweeperSolver:
@@ -20,27 +20,27 @@ class MinesweeperSolver:
         self.__frontier_revealed = []
         self.__frontier_covered = []
         self.__all_neighbours = get_all_neighbours(self.__rows, self.__cols)
-        self.__uncovered_neighbours = self.__all_neighbours.copy()
+        self.__revealed_neighbours = self.__all_neighbours.copy()
 
     @property
     def finished(self):
         return self.__game.state != GameState.RUNNING
 
     def update_data(self):
-        self.__uncovered = get_uncovered_grid(self.__game.grid)
+        self.__revealed = get_revealed_grid(self.__game.grid)
 
         self.__frontier_revealed, self.__frontier_covered = generate_frontier(
-            self.__uncovered
+            self.__revealed
         )
 
         revealed = set()
         for x, y in self.__unknown:
-            if self.__uncovered[y][x]:
+            if self.__revealed[y][x]:
                 revealed.add((x, y))
 
         self.__unknown -= revealed
 
-        self.__uncovered_neighbours = get_uncovered_neighbours(self.__uncovered)
+        self.__revealed_neighbours = get_revealed_neighbours(self.__revealed)
 
     def make_move(self):
         self.update_data()
