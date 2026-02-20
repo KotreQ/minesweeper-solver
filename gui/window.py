@@ -1,6 +1,6 @@
 import pygame
 
-from game import GameState, MinesweeperGame, TileState
+from game.game import GameState, MinesweeperGame, TileState
 from game.utils import get_neighbours
 
 from .graphics import (

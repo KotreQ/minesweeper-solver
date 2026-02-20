@@ -1,4 +1,4 @@
-from game import GameState, Tile, TileState
+from game.game import GameState, Tile, TileState
 from .textures import TEXTURES, TILE_WIDTH
 
 
