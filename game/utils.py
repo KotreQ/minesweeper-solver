@@ -27,10 +27,14 @@ def print_grid(grid: list[list[Tile]]):
         TileState.FALSE_FLAG: "f",
     }
 
-    rows = []
+    width = len(grid[0])
+    table_line = "#" + (width * 2 + 1) * "-" + "#"
+
+    rows = [table_line]
     for row in grid:
-        row = "".join(TILE_CHARS[tile.state] for tile in row)
+        row = "| " + " ".join(TILE_CHARS[tile.state] for tile in row) + " |"
         rows.append(row)
+    rows.append(table_line)
 
     output = "\n".join(rows)
 
