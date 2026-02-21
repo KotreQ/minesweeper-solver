@@ -66,8 +66,9 @@ class Tile:
 
         return False
 
-    def toggle_flag(self) -> bool:
-        """Toggles the flag on the tile
+    
+    def place_flag(self) -> bool:
+        """Places a flag on the tile
 
         Returns:
             bool: True if succeeded, False otherwise
@@ -75,14 +76,25 @@ class Tile:
 
         if self.__game_finished:
             return False
-
+        
         if self.__state == TileState.COVERED:
             self.__state = TileState.FLAGGED
             return True
-        elif self.__state == TileState.FLAGGED:
+        return False
+
+    def remove_flag(self) -> bool:
+        """Removes a flag from the tile
+
+        Returns:
+            bool: True if succeeded, False otherwise
+        """
+
+        if self.__game_finished:
+            return False
+        
+        if self.__state == TileState.FLAGGED:
             self.__state = TileState.COVERED
             return True
-
         return False
 
     def _mark_mine(self) -> bool:

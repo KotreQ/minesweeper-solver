@@ -97,8 +97,28 @@ class MinesweeperGame:
         if self.__game_state != GameState.RUNNING:
             return
 
+        state = self.grid[y][x].state
+
+        if state == TileState.COVERED:
+            self.place_flag(x, y)
+        elif state == TileState.FLAGGED:
+            self.remove_flag(x, y)
+
+    def place_flag(self, x, y):
+        if self.__game_state != GameState.RUNNING:
+            return
+        
         tile = self.grid[y][x]
-        tile.toggle_flag()
+        if tile.place_flag():
+            self.__flags_placed += 1
+    
+    def remove_flag(self, x, y):
+        if self.__game_state != GameState.RUNNING:
+            return
+        
+        tile = self.grid[y][x]
+        if tile.remove_flag():
+            self.__flags_placed -= 1
 
     def uncover(self, x, y):
         if self.__game_state != GameState.RUNNING:
