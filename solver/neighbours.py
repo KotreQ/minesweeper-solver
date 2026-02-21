@@ -1,11 +1,11 @@
 import numpy as np
 
 
-def get_revealed_neighbours(revealed):
-    padded = np.pad(revealed, 1, "constant")
+def get_key_neighbours(key_arr):
+    padded = np.pad(key_arr, 1, "constant")
 
-    rows, cols = revealed.shape
-    neighbours = np.zeros_like(revealed, np.uint8)
+    rows, cols = key_arr.shape
+    neighbours = np.zeros_like(key_arr, np.uint8)
 
     for dy in (-1, 0, 1):
         for dx in (-1, 0, 1):
@@ -34,3 +34,16 @@ def get_all_neighbours(rows, cols):
             neighbours[y][x] = val
 
     return neighbours
+
+
+def get_neighbours_coords(x, y, rows, cols):
+    for ny in range(y - 1, y + 2):
+        if ny < 0 or ny >= rows:
+            continue
+
+        for nx in range(x - 1, x + 2):
+            if nx < 0 or nx >= cols:
+                continue
+
+            if ny != y or nx != x:
+                yield nx, ny
