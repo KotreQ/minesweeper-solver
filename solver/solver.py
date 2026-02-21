@@ -5,6 +5,7 @@ import numpy as np
 from game.game import GameState, MinesweeperGame
 from game.utils import print_grid
 
+from .csp import solve_csp
 from .frontier import generate_frontier
 from .grid import get_revealed_grid, get_value_grid
 from .neighbours import (
@@ -70,6 +71,23 @@ class MinesweeperSolver:
                     if not self.__revealed[ny][nx] and not self.__flagged[ny][nx]:
                         self.__game.uncover(nx, ny)
                         move_made = True
+
+        if move_made:
+            return
+
+        csp_solutions, all_solutions = solve_csp(
+            self.__frontier_covered,
+            self.__frontier_revealed,
+            self.__values,
+            self.__flagged_neighbours,
+        )
+
+        for i in range(len(self.__frontier_covered)):
+            x, y = self.__frontier_covered[i]
+            solution_count = csp_solutions[i]
+            if solution_count == 0:
+                self.__game.uncover(x, y)
+                move_made = True
 
         if move_made:
             return
