@@ -40,8 +40,14 @@ def main() -> None:
     win_count = np.count_nonzero(test_results)
 
     print(f"Win rate: {win_count / TEST_COUNT * 100:.1f}%")
-    print(f"Median win time: {np.median(test_times[test_results]):.1f}ms")
-    print(f"Median loss time: {np.median(test_times[~test_results]):.1f}ms")
+    if win_count != 0:
+        print(f"Median win time: {np.median(test_times[test_results]):.1f}ms")
+    else:
+        print("No win data")
+    if win_count != TEST_COUNT:
+        print(f"Median loss time: {np.median(test_times[~test_results]):.1f}ms")
+    else:
+        print("No loss data")
 
     print("")
     print("Running demo...")
