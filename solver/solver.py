@@ -88,6 +88,10 @@ class MinesweeperSolver:
             if solution_count == 0:
                 self.__game.uncover(x, y)
                 move_made = True
+            elif solution_count == all_solutions:
+                self.__game.place_flag(x, y)
+                self.__flagged[y][x] = True
+                move_made = True
 
         if move_made:
             return
