@@ -5,7 +5,6 @@ import numpy as np
 from game.game import GameState, MinesweeperGame
 
 from .solver import MinesweeperSolver
-from .utils.cli import clear_console
 
 COLS = 16
 ROWS = 16
@@ -15,8 +14,6 @@ MINES = 40
 def main() -> None:
 
     ### TEST
-
-    clear_console()
 
     TEST_COUNT = 100
     test_times = np.zeros((TEST_COUNT), np.float64)
@@ -34,8 +31,6 @@ def main() -> None:
 
         print(f"\rTESTING: {(i + 1) / TEST_COUNT * 100:.1f}%", end="")
     print("")
-
-    clear_console()
 
     win_count = np.count_nonzero(test_results)
 
@@ -62,7 +57,6 @@ def main() -> None:
     while not solver.finished:
         time.sleep(0.2)
         solver.make_move()
-        clear_console()
         solver.print_grid()
         print(f"Game state: {game.state.name}")
 
