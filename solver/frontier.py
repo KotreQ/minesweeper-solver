@@ -38,7 +38,7 @@ def flood_fill_sort(arr):
 
     for y in range(rows):
         for x in range(cols):
-            if not arr[y][x] or visited[y][x]:
+            if not arr[y, x] or visited[y, x]:
                 continue
 
             q = deque()
@@ -55,7 +55,7 @@ def flood_fill_sort(arr):
                     ny = y + dy
 
                     if 0 <= nx < cols and 0 <= ny < rows:
-                        if arr[ny, nx] and not visited[ny][nx]:
+                        if arr[ny, nx] and not visited[ny, nx]:
                             visited[ny, nx] = True
                             q.append((nx, ny))
 

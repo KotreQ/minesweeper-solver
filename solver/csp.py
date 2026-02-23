@@ -37,7 +37,7 @@ def solve_csp(covered_frontier, revealed_frontier, values, flagged_nieghbours):
 
     constraints = []
     for x, y in revealed_frontier:
-        mines_left = values[y][x] - flagged_nieghbours[y][x]
+        mines_left = values[y, x] - flagged_nieghbours[y, x]
 
         neighbour_mask = [
             abs(nx - x) <= 1 and abs(ny - y) <= 1 for nx, ny in covered_frontier

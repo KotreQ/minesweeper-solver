@@ -31,7 +31,7 @@ def get_all_neighbours(rows, cols):
             else:
                 val = 8
 
-            neighbours[y][x] = val
+            neighbours[y, x] = val
 
     return neighbours
 

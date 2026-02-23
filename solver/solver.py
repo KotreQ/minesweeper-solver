@@ -46,7 +46,7 @@ class MinesweeperSolver:
             self.__revealed
         )
         self.__frontier_covered = list(
-            filter(lambda p: not self.__flagged[p[1]][p[0]], self.__frontier_covered)
+            filter(lambda p: not self.__flagged[p[1], p[0]], self.__frontier_covered)
         )
 
     def make_move(self):
@@ -56,19 +56,19 @@ class MinesweeperSolver:
 
         for x, y in self.__frontier_revealed:
             covered_neighbours = (
-                self.__all_neighbours[y][x] - self.__revealed_neighbours[y][x]
+                self.__all_neighbours[y, x] - self.__revealed_neighbours[y, x]
             )
 
-            if covered_neighbours == self.__values[y][x]:
+            if covered_neighbours == self.__values[y, x]:
                 for nx, ny in get_neighbours_coords(x, y, self.__rows, self.__cols):
-                    if not self.__revealed[ny][nx] and not self.__flagged[ny][nx]:
+                    if not self.__revealed[ny, nx] and not self.__flagged[ny, nx]:
                         self.__game.place_flag(nx, ny)
-                        self.__flagged[ny][nx] = True
+                        self.__flagged[ny, nx] = True
                         move_made = True
 
-            if self.__flagged_neighbours[y][x] == self.__values[y][x]:
+            if self.__flagged_neighbours[y, x] == self.__values[y, x]:
                 for nx, ny in get_neighbours_coords(x, y, self.__rows, self.__cols):
-                    if not self.__revealed[ny][nx] and not self.__flagged[ny][nx]:
+                    if not self.__revealed[ny, nx] and not self.__flagged[ny, nx]:
                         self.__game.uncover(nx, ny)
                         move_made = True
 
@@ -90,7 +90,7 @@ class MinesweeperSolver:
                 move_made = True
             elif solution_count == all_solutions:
                 self.__game.place_flag(x, y)
-                self.__flagged[y][x] = True
+                self.__flagged[y, x] = True
                 move_made = True
 
         if move_made:
@@ -100,7 +100,7 @@ class MinesweeperSolver:
             y = random.randrange(self.__rows)
             x = random.randrange(self.__cols)
 
-            if not self.__revealed[y][x] and not self.__flagged[y][x]:
+            if not self.__revealed[y, x] and not self.__flagged[y, x]:
                 self.__game.uncover(x, y)
                 move_made = True
 
