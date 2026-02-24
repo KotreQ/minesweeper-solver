@@ -2,14 +2,16 @@ from collections import deque
 
 import numpy as np
 
+from .neighbours import get_neighbours_coords
 
-def generate_frontier(revealed):
-    padded = np.pad(revealed, 1, "edge")
 
-    rows, cols = revealed.shape
+def find_edges(mask):
+    padded = np.pad(mask, 1, "edge")
 
-    max_pool = np.zeros_like(revealed, np.bool_)
-    min_pool = np.ones_like(revealed, np.bool_)
+    rows, cols = mask.shape
+
+    max_pool = np.zeros_like(mask, np.bool_)
+    min_pool = np.ones_like(mask, np.bool_)
 
     for dy in (-1, 0, 1):
         for dx in (-1, 0, 1):
@@ -19,44 +21,68 @@ def generate_frontier(revealed):
 
     border_mask = max_pool != min_pool
 
-    revealed_frontier = border_mask & revealed
-    covered_frontier = border_mask & ~revealed
+    ones_edge = border_mask & mask
+    zeros_edge = border_mask & ~mask
 
-    revealed_frontier = flood_fill_sort(revealed_frontier)
-    covered_frontier = flood_fill_sort(covered_frontier)
-
-    return revealed_frontier, covered_frontier
+    return ones_edge, zeros_edge
 
 
-def flood_fill_sort(arr):
-    rows, cols = arr.shape
-    result = []
+def generate_frontiers(
+    revealed: np.ndarray[np.bool_], flagged: np.ndarray[np.bool_]
+) -> list[tuple[list[tuple[int, int]], list[tuple[int, int]]]]:
+    """Returns all frontiers on map
 
-    visited = np.zeros_like(arr, np.bool_)
+    Args:
+        revealed (np.ndarray[np.bool_]): Boolean mask of revealed tiles
+        flagged (np.ndarray[np.bool_]): Boolean mask of flagged tiles
 
-    NEIGHBOURS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    Returns:
+        list[tuple[list[tuple[int, int]], list[tuple[int, int]]]]: A list of frontiers structured like: [(revealed_frontier, covered_frontier), ...] where each frontier is a list of coordinates
+    """
+    revealed_frontiers_mask, covered_frontiers_mask = find_edges(revealed)
+    covered_frontiers_mask &= ~flagged
 
-    for y in range(rows):
-        for x in range(cols):
-            if not arr[y, x] or visited[y, x]:
+    height, width = revealed.shape
+
+    visited = np.zeros((height, width), np.bool_)
+    walkable = revealed_frontiers_mask | covered_frontiers_mask
+
+    frontiers = []
+
+    for y in range(height):
+        for x in range(width):
+            if not walkable[y, x] or visited[y, x]:
                 continue
 
             q = deque()
             q.append((x, y))
             visited[y, x] = True
 
+            revealed_frontier = []
+            covered_frontier = []
+
             while q:
-                # TODO: Change algorithm to DFS and push neighbours in specific order based on previous direction
                 x, y = q.popleft()
-                result.append((x, y))
 
-                for dx, dy in NEIGHBOURS:
-                    nx = x + dx
-                    ny = y + dy
+                if revealed[y, x]:
+                    revealed_frontier.append((x, y))
+                else:
+                    covered_frontier.append((x, y))
 
-                    if 0 <= nx < cols and 0 <= ny < rows:
-                        if arr[ny, nx] and not visited[ny, nx]:
-                            visited[ny, nx] = True
-                            q.append((nx, ny))
+                for nx, ny in get_neighbours_coords(x, y, height, width):
+                    if visited[ny, nx]:
+                        continue
 
-    return result
+                    if (
+                        revealed[y, x]
+                        and covered_frontiers_mask[ny, nx]
+                        or not revealed[y, x]
+                        and revealed_frontiers_mask[ny, nx]
+                    ):  # ensure switch between revealed and covered at each step
+                        visited[ny, nx] = True
+                        q.append((nx, ny))
+
+            if len(covered_frontier) > 0:  # skip frontiers with empty covered lists
+                frontiers.append((revealed_frontier, covered_frontier))
+
+    return frontiers
