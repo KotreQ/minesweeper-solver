@@ -6,9 +6,9 @@ from game.game import GameState, MinesweeperGame
 
 from .solver import MinesweeperSolver
 
-COLS = 16
+COLS = 30
 ROWS = 16
-MINES = 40
+MINES = 99
 
 
 def main() -> None:
