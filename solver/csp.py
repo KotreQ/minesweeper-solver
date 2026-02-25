@@ -1,53 +1,28 @@
 import numpy as np
 
 
-class Constraint:
-    def __init__(self, solution_arr, filled_mask, used_mask, target_val):
-        # Mutable values
-        self.__solution_arr = solution_arr  # currently tested solution
-        self.__filled_mask = filled_mask  # which indices of solution are locked
-
-        # Immutable values
-        self.__used_mask = used_mask  # which indices do affect this constraint
-        self.__values_count = np.sum(self.__used_mask)
-        self.__target_val = target_val  # the target amount of True values
-
-    def check(self) -> bool:
-        mask_locked = self.__filled_mask & self.__used_mask
-
-        values_locked = np.sum(mask_locked)
-        values_free = self.__values_count - values_locked
-
-        solution = self.__solution_arr & mask_locked
-        current_val = np.sum(solution)
-
-        if current_val > self.__target_val:
-            return False
-
-        if current_val + values_free < self.__target_val:
-            return False
-
-        return True
-
-
 def solve_csp(covered_frontier, revealed_frontier, values, flagged_nieghbours):
     solution_len = len(covered_frontier)
     cur_solution = np.zeros(solution_len, np.bool_)
-    cur_filled_mask = np.zeros(solution_len, np.bool_)
 
-    constraints = []
-    for x, y in revealed_frontier:
-        mines_left = values[y, x] - flagged_nieghbours[y, x]
+    tile_constraints = [
+        [] for _ in range(solution_len)
+    ]  # which constraints affect a specific tile
 
-        neighbour_mask = [
-            abs(nx - x) <= 1 and abs(ny - y) <= 1 for nx, ny in covered_frontier
-        ]
-        neighbour_mask = np.array(neighbour_mask, np.bool_)
+    constraints_len = len(revealed_frontier)
+    mines_left = np.zeros(constraints_len, np.int8)
+    tiles_free = np.zeros(constraints_len, np.int8)
 
-        constraint = Constraint(
-            cur_solution, cur_filled_mask, neighbour_mask, mines_left
-        )
-        constraints.append(constraint)
+    for i in range(constraints_len):
+        x, y = revealed_frontier[i]
+
+        mines_left[i] = values[y, x] - flagged_nieghbours[y, x]
+
+        for j in range(solution_len):
+            nx, ny = covered_frontier[j]
+            if abs(nx - x) <= 1 and abs(ny - y) <= 1:
+                tile_constraints[j].append(i)
+                tiles_free[i] += 1
 
     solution_sum = np.zeros(solution_len, np.uint64)
     all_solutions = 0
@@ -60,20 +35,28 @@ def solve_csp(covered_frontier, revealed_frontier, values, flagged_nieghbours):
             all_solutions += 1
             return
 
-        cur_filled_mask[idx] = True
-
-        # try False
-        cur_solution[idx] = False
-        if all(c.check() for c in constraints):
-            rec(idx + 1)
+        for c in tile_constraints[idx]:
+            tiles_free[c] -= 1
 
         # try True
         cur_solution[idx] = True
-        if all(c.check() for c in constraints):
+        for c in tile_constraints[idx]:
+            mines_left[c] -= 1
+
+        if all(0 <= mines_left[c] <= tiles_free[c] for c in tile_constraints[idx]):
             rec(idx + 1)
 
-        cur_filled_mask[idx] = False
-    
+        # try False
+        cur_solution[idx] = False
+        for c in tile_constraints[idx]:
+            mines_left[c] += 1
+
+        if all(0 <= mines_left[c] <= tiles_free[c] for c in tile_constraints[idx]):
+            rec(idx + 1)
+
+        for c in tile_constraints[idx]:
+            tiles_free[c] += 1
+
     rec(0)
 
     return solution_sum, all_solutions
