@@ -35,14 +35,15 @@ def main() -> None:
     win_count = np.count_nonzero(test_results)
 
     print(f"Win rate: {win_count / TEST_COUNT * 100:.1f}%")
+    print("Timing (median / mean):")
     if win_count != 0:
-        print(f"Median win time: {np.median(test_times[test_results]):.1f}ms")
+        print(f"\tWin: {np.median(test_times[test_results]):.1f}ms / {np.mean(test_times[test_results]):.1f}ms")
     else:
-        print("No win data")
+        print("\tNo win data")
     if win_count != TEST_COUNT:
-        print(f"Median loss time: {np.median(test_times[~test_results]):.1f}ms")
+        print(f"\tLoss: {np.median(test_times[~test_results]):.1f}ms / {np.mean(test_times[~test_results]):.1f}ms")
     else:
-        print("No loss data")
+        print("\tNo loss data")
 
     print("")
     print("Running demo...")
@@ -58,7 +59,7 @@ def main() -> None:
         time.sleep(0.2)
         solver.make_move()
         solver.print_grid()
-        print(f"Game state: {game.state.name}")
+    print(f"Game state: {game.state.name}")
 
 
 if __name__ == "__main__":
