@@ -73,23 +73,36 @@ class MinesweeperSolver:
         if move_made:
             return
 
-        for revealed_frontier, covered_frontier in self.__frontiers:
-            csp_solutions, all_solutions = solve_csp(
+        no_data_tiles = self.__revealed_neighbours == 0
+
+        frontiers_solutions = []
+
+        for i in range(len(self.__frontiers)):
+            revealed_frontier, covered_frontier = self.__frontiers[i]
+            csp_solutions = solve_csp(
                 covered_frontier,
                 revealed_frontier,
                 self.__values,
                 self.__flagged_neighbours,
             )
 
-            for i in range(len(covered_frontier)):
-                x, y = covered_frontier[i]
-                solution_count = csp_solutions[i]
+            frontiers_solutions.append(csp_solutions)
 
-                if solution_count == 0:
+            acc_solutions = sum(
+                csp_solutions[mines_used][0] for mines_used in csp_solutions
+            )
+            acc_all_solutions = sum(
+                csp_solutions[mines_used][1] for mines_used in csp_solutions
+            )
+
+            for j in range(len(covered_frontier)):
+                x, y = covered_frontier[j]
+
+                if acc_solutions[j] == 0:
                     self.__game.uncover(x, y)
                     move_made = True
 
-                elif solution_count == all_solutions:
+                elif acc_solutions[j] == acc_all_solutions:
                     self.__game.place_flag(x, y)
                     self.__flagged[y, x] = True
                     move_made = True

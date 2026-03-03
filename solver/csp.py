@@ -1,7 +1,23 @@
 import numpy as np
 
 
-def solve_csp(covered_frontier, revealed_frontier, values, flagged_nieghbours):
+def solve_csp(
+    covered_frontier: list[tuple[int, int]],
+    revealed_frontier: list[tuple[int, int]],
+    values: np.ndarray[np.int8],
+    flagged_nieghbours: np.ndarray[np.uint8],
+) -> dict[int, tuple[np.ndarray, int]]:
+    """Solves CSP for a specified frontier
+
+    Args:
+        covered_frontier (list[tuple[int, int]]): coordinates of covered tiles
+        revealed_frontier (list[tuple[int, int]]): coordinates of revealed tiles
+        values (np.ndarray[np.int8]): array of tiles' values
+        flagged_nieghbours (np.ndarray[np.uint8]): array of tiles' flagged neighbours counts
+
+    Returns:
+        dict[int, tuple[np.ndarray, int]]: for each number of mines used: (number of solutions with mine present at each tile, number of all solutions)
+    """
     solution_len = len(covered_frontier)
     cur_solution = np.zeros(solution_len, np.bool_)
 
@@ -24,15 +40,21 @@ def solve_csp(covered_frontier, revealed_frontier, values, flagged_nieghbours):
                 tile_constraints[j].append(i)
                 tiles_free[i] += 1
 
-    solution_sum = np.zeros(solution_len, np.uint64)
-    all_solutions = 0
+    solutions = {}
+
+    mines_used = 0
 
     def rec(idx):
-        nonlocal solution_sum, all_solutions
+        nonlocal solutions, mines_used
 
         if idx == solution_len:
-            solution_sum += cur_solution
-            all_solutions += 1
+            if mines_used not in solutions:
+                solutions[mines_used] = (np.zeros(solution_len, np.uint64), 0)
+
+            solutions[mines_used] = (
+                solutions[mines_used][0] + cur_solution,
+                solutions[mines_used][1] + 1,
+            )
             return
 
         for c in tile_constraints[idx]:
@@ -40,6 +62,7 @@ def solve_csp(covered_frontier, revealed_frontier, values, flagged_nieghbours):
 
         # try True
         cur_solution[idx] = True
+        mines_used += 1
         for c in tile_constraints[idx]:
             mines_left[c] -= 1
 
@@ -48,6 +71,7 @@ def solve_csp(covered_frontier, revealed_frontier, values, flagged_nieghbours):
 
         # try False
         cur_solution[idx] = False
+        mines_used -= 1
         for c in tile_constraints[idx]:
             mines_left[c] += 1
 
@@ -59,4 +83,4 @@ def solve_csp(covered_frontier, revealed_frontier, values, flagged_nieghbours):
 
     rec(0)
 
-    return solution_sum, all_solutions
+    return solutions
