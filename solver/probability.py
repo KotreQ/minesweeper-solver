@@ -1,7 +1,9 @@
 import numpy as np
 
 
-def combine_frontier_solutions(covered_frontiers, frontiers_solutions):
+def combine_frontier_solutions(
+    covered_frontiers, frontiers_solutions, min_mines, max_mines
+):
 
     frontier_count = len(frontiers_solutions)
 
@@ -31,6 +33,9 @@ def combine_frontier_solutions(covered_frontiers, frontiers_solutions):
             mine_possibilities, solution_count = frontier_solutions[mines_used]
             all_mines_used = prev_mines_used + mines_used
 
+            if all_mines_used > max_mines:
+                continue
+
             # multiply previous ones to keep track of solution count
             cur_solution = prev_solution * solution_count
             cur_solution[
@@ -41,6 +46,9 @@ def combine_frontier_solutions(covered_frontiers, frontiers_solutions):
             rec(idx + 1, all_mines_used, cur_solution, cur_all_solutions)
 
             if idx == frontier_count - 1:  # when full solution completed
+                if all_mines_used < min_mines:
+                    continue
+
                 if all_mines_used not in grid_solutions:
                     grid_solutions[all_mines_used] = (
                         np.zeros(frontiers_lengths_sums[frontier_count], np.uint64),
