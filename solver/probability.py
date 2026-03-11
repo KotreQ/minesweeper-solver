@@ -10,7 +10,7 @@ def combine_frontier_solutions(
     frontiers_lengths = np.array(
         [len(frontier) for frontier in covered_frontiers], np.uint64
     )
-    frontiers_lengths_sums = np.concat(
+    frontiers_lengths_sums = np.concatenate(
         (np.zeros(1, np.uint64), np.cumsum(frontiers_lengths))
     )
 
