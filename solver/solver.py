@@ -1,3 +1,4 @@
+from pprint import pprint
 import random
 
 import numpy as np
@@ -5,7 +6,8 @@ import numpy as np
 from game.game import GameState, MinesweeperGame
 from game.utils import print_grid
 
-from .grid import get_neighbours_coords, update_numpy_grid, cell_dtype
+from .grid import update_numpy_grid, cell_dtype
+from .constraints import get_constraints
 
 
 class MinesweeperSolver:
@@ -25,7 +27,13 @@ class MinesweeperSolver:
 
     def make_move(self):
         self.update_data()
-        print(self.__grid)
+
+        constraints = get_constraints(self.__grid)
+
+        pprint(constraints)
+
+        self.__game.uncover(random.randrange(self.__cols), random.randrange(self.__rows))
+
 
     def print_grid(self):
         print_grid(self.__game.grid)
