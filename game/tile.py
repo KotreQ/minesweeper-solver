@@ -29,7 +29,11 @@ class Tile:
     @property
     def state(self) -> TileState:
         return self.__state
-    
+
+    @property
+    def is_flagged(self) -> bool:
+        return self.__state == TileState.FLAGGED
+
     @property
     def is_revealed(self) -> bool:
         return self.__state.value <= 8
