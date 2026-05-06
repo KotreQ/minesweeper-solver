@@ -7,6 +7,7 @@ from game.utils import print_grid
 
 from .grid import update_numpy_grid, cell_dtype
 from .constraints import get_constraints, optimize_constraints
+from .solutions import find_constraints_solutions
 
 
 class MinesweeperSolver:
@@ -45,13 +46,14 @@ class MinesweeperSolver:
         if move_made:
             return
 
+        solutions = find_constraints_solutions(constraints)
+
         while True:
             y = random.randrange(self.__rows)
             x = random.randrange(self.__cols)
             if not self.__grid[y, x]["is_revealed"] and not self.__grid[y, x]["is_flagged"]:
                 self.__game.uncover(x, y)
                 break
-
 
     def print_grid(self):
         print_grid(self.__game.grid)
