@@ -1,4 +1,3 @@
-from pprint import pprint
 import random
 
 import numpy as np
@@ -7,7 +6,7 @@ from game.game import GameState, MinesweeperGame
 from game.utils import print_grid
 
 from .grid import update_numpy_grid, cell_dtype
-from .constraints import get_constraints
+from .constraints import get_constraints, optimize_constraints
 
 
 class MinesweeperSolver:
@@ -28,11 +27,30 @@ class MinesweeperSolver:
     def make_move(self):
         self.update_data()
 
+        move_made = False
+
         constraints = get_constraints(self.__grid)
 
-        pprint(constraints)
+        constraints = optimize_constraints(constraints)
 
-        self.__game.uncover(random.randrange(self.__cols), random.randrange(self.__rows))
+        for c in constraints:
+            if len(c.indices) == 1:
+                y, x = list(c.indices)[0]
+                if c.value:
+                    self.__game.place_flag(x, y)
+                else:
+                    self.__game.uncover(x, y)
+                move_made = True
+
+        if move_made:
+            return
+
+        while True:
+            y = random.randrange(self.__rows)
+            x = random.randrange(self.__cols)
+            if not self.__grid[y, x]["is_revealed"] and not self.__grid[y, x]["is_flagged"]:
+                self.__game.uncover(x, y)
+                break
 
 
     def print_grid(self):
