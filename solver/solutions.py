@@ -20,6 +20,23 @@ def find_constraints_solutions(constraints: list[Constraint]):
         set_solutions = csp_bruteforce(constraint_set)
 
 
+def combine_unrelated_solutions(a: Solution, b: Solution) -> Solution:
+    mines_used = a.mines_used + b.mines_used
+    placement_count = {}
+
+    for index, count in a.placement_count.items():
+        count *= b.all_placements
+        placement_count[index] = count
+    
+    for index, count in b.placement_count.items():
+        count *= a.all_placements
+        placement_count[index] = count
+
+    all_placements = a.all_placements * b.all_placements
+    
+    return Solution(mines_used, placement_count, all_placements)
+
+
 def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
     all_indices = set()
 
