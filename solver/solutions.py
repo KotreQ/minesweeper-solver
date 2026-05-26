@@ -15,7 +15,15 @@ class Solution:
     all_placements: int
 
 
-def find_constraints_solutions(constraints: list[Constraint]):
+def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:
+    """This function returns all possible solutions that would satisfy constraints
+
+    Args:
+        constraints (list[Constraint]): Constraints that have to be satisfied
+
+    Returns:
+        list[Solution]: All possible solutions with regard to mine counts
+    """
     constraint_sets = find_disjoint_constraints(constraints)
 
     sets_solutions = []
@@ -41,6 +49,14 @@ def find_constraints_solutions(constraints: list[Constraint]):
 
 
 def extract_sure_variables(solutions: list[Solution]) -> tuple[list, list]:
+    """Extract variables that have to be either 1 or 0 in all solutions
+
+    Args:
+        solutions (list[Solution]): List of solutions to check
+
+    Returns:
+        tuple[list, list]: (list of surely false variables, list of surely true variables)
+    """
     index_placements = defaultdict(int)
     all_placements = defaultdict(int)
 
@@ -62,6 +78,15 @@ def extract_sure_variables(solutions: list[Solution]) -> tuple[list, list]:
 
 
 def combine_related_solutions(a: Solution, b: Solution) -> Solution:
+    """Combines solutions that use the same number of mines and on the same indices
+
+    Args:
+        a (Solution): First solution
+        b (Solution): Second solution
+
+    Returns:
+        Solution: The combined solution
+    """
     assert a.placement_count.keys() == b.placement_count.keys()
     assert a.mines_used == b.mines_used
 
@@ -77,6 +102,15 @@ def combine_related_solutions(a: Solution, b: Solution) -> Solution:
 
 
 def combine_unrelated_solutions(a: Solution, b: Solution) -> Solution:
+    """Combines solutions that don't share any indices
+
+    Args:
+        a (Solution): First solution
+        b (Solution): Second solution
+
+    Returns:
+        Solution: The combined solution
+    """
     assert a.placement_count.keys().isdisjoint(b.placement_count.keys())
 
     mines_used = a.mines_used + b.mines_used
@@ -96,6 +130,14 @@ def combine_unrelated_solutions(a: Solution, b: Solution) -> Solution:
 
 
 def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
+    """Finds all possible solutions for the specified constraints using a brute-force algorithm
+
+    Args:
+        constraints (list[Constraint]): The constraints that have to be satisfied
+
+    Returns:
+        list[Solution]: Possible solutions - each separate solution is for different number of mines used
+    """
     all_indices = set()
 
     for c in constraints:
@@ -164,6 +206,14 @@ def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
 
 
 def find_disjoint_constraints(constraints: list[Constraint]) -> list[list[Constraint]]:
+    """Divides the constraints into separate lists that can be solved independently
+
+    Args:
+        constraints (list[Constraint]): All constraints
+
+    Returns:
+        list[list[Constraint]]: Independent lists of constraints
+    """
     uf = UnionFind()  # structure has both Constraint and tuple[int, int] index inside
 
     for c in constraints:
