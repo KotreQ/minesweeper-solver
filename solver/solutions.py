@@ -1,12 +1,14 @@
-from .constraints import Constraint
 from dataclasses import dataclass
-
 from collections import defaultdict
+from itertools import product
+from functools import reduce
+
+from .constraints import Constraint
 from .unionfind import UnionFind
 import numpy as np
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Solution:
     mines_used: int
     placement_count: dict[tuple[int, int], int]
@@ -16,11 +18,67 @@ class Solution:
 def find_constraints_solutions(constraints: list[Constraint]):
     constraint_sets = find_disjoint_constraints(constraints)
 
+    sets_solutions = []
     for constraint_set in constraint_sets:
         set_solutions = csp_bruteforce(constraint_set)
+        sets_solutions.append(set_solutions)
+
+    if sets_solutions:
+        full_solutions = [reduce(combine_unrelated_solutions, full_solution) for full_solution in product(*sets_solutions)]
+    else:
+        full_solutions = []
+
+    combined_solutions = {}  # mines_used: solution
+    for s in full_solutions:
+        if not s.mines_used in combined_solutions:
+            combined_solutions[s.mines_used] = s
+        else:
+            combined_solutions[s.mines_used] = combine_related_solutions(combined_solutions[s.mines_used], s)
+    
+    combined_solutions = list(combined_solutions.values())
+    
+    return combined_solutions
+
+
+def extract_sure_variables(solutions: list[Solution]) -> tuple[list, list]:
+    index_placements = defaultdict(int)
+    all_placements = defaultdict(int)
+
+    for solution in solutions:
+        for idx, count in solution.placement_count.items():
+            index_placements[idx] += count
+            all_placements[idx] += solution.all_placements
+    
+    sure_false = []
+    sure_true = []
+
+    for idx in index_placements:
+        if index_placements[idx] == 0:
+            sure_false.append(idx)
+        elif index_placements[idx] == all_placements[idx]:
+            sure_true.append(idx)
+
+    return sure_false, sure_true
+
+
+def combine_related_solutions(a: Solution, b: Solution) -> Solution:
+    assert a.placement_count.keys() == b.placement_count.keys()
+    assert a.mines_used == b.mines_used
+
+    mines_used = a.mines_used
+    placement_count = {}
+
+    for index in a.placement_count:
+        placement_count[index] = a.placement_count[index] + b.placement_count[index]
+    
+    all_placements = a.all_placements + b.all_placements
+
+    return Solution(mines_used, placement_count, all_placements)
 
 
 def combine_unrelated_solutions(a: Solution, b: Solution) -> Solution:
+    assert a.placement_count.keys().isdisjoint(b.placement_count.keys())
+
     mines_used = a.mines_used + b.mines_used
     placement_count = {}
 
