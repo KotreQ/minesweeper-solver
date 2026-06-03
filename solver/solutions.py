@@ -3,8 +3,7 @@ from collections import defaultdict
 from itertools import product
 from functools import reduce
 
-from .constraints import Constraint
-from .unionfind import UnionFind
+from .constraints import Constraint, find_disjoint_constraints
 import numpy as np
 
 
@@ -201,33 +200,5 @@ def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
             all_solutions[mines_used],
         )
         result.append(solution)
-
-    return result
-
-
-def find_disjoint_constraints(constraints: list[Constraint]) -> list[list[Constraint]]:
-    """Divides the constraints into separate lists that can be solved independently
-
-    Args:
-        constraints (list[Constraint]): All constraints
-
-    Returns:
-        list[list[Constraint]]: Independent lists of constraints
-    """
-    uf = UnionFind()  # structure has both Constraint and tuple[int, int] index inside
-
-    for c in constraints:
-        uf.add(c)
-        for index in c.indices:
-            uf.add(index)
-            uf.union(c, index)
-    
-    disjoint_sets = defaultdict(list)
-
-    for c in constraints:
-        set_id = uf.find(c)
-        disjoint_sets[set_id].append(c)
-    
-    result = list(disjoint_sets.values())
 
     return result

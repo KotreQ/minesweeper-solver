@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 import numpy as np
+from collections import defaultdict
 from .frontier import find_edges
 from .grid import get_neighbours_coords
+from .unionfind import UnionFind
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +35,65 @@ def get_constraints(grid):
             constraints.append(c)
     
     return constraints
+
+
+def sort_constraints(constraints: list[Constraint]) -> None:
+    # using counting sort twice for linear-time sorting
+    N = len(constraints)
+
+    # first, sort by the length of the constraint
+    temp = [None for _ in range(N)]
+
+    counts = [0 for _ in range(9)]
+    for c in constraints:
+        idx = 8 - len(c.indices)
+        counts[idx] += 1
+    counts = np.cumsum(counts)
+
+    for c in constraints[::-1]:
+        idx = 8 - len(c.indices)
+        counts[idx] -= 1
+        temp[counts[idx]] = c
+    
+    # second, do a stable sort by the value of the constraint
+    counts = [0 for _ in range(9)]
+    for c in temp:
+        idx = 8 - c.value
+        counts[idx] += 1
+    counts = np.cumsum(counts)
+
+    for c in temp[::-1]:
+        idx = 8 - c.value
+        counts[idx] -= 1
+        constraints[counts[idx]] = c
+
+
+def find_disjoint_constraints(constraints: list[Constraint]) -> list[list[Constraint]]:
+    """Divides the constraints into separate lists that can be solved independently
+
+    Args:
+        constraints (list[Constraint]): All constraints
+
+    Returns:
+        list[list[Constraint]]: Independent lists of constraints
+    """
+    uf = UnionFind()  # structure has both Constraint and tuple[int, int] index inside
+
+    for c in constraints:
+        uf.add(c)
+        for index in c.indices:
+            uf.add(index)
+            uf.union(c, index)
+    
+    disjoint_sets = defaultdict(list)
+
+    for c in constraints:
+        set_id = uf.find(c)
+        disjoint_sets[set_id].append(c)
+    
+    result = list(disjoint_sets.values())
+
+    return result
 
 
 def optimize_constraints(constraints: list[Constraint]) -> list[Constraint]:
@@ -82,37 +143,6 @@ def optimize_constraints(constraints: list[Constraint]) -> list[Constraint]:
         constraints = list(new_constraints)
     
     return constraints
-
-
-def sort_constraints(constraints: list[Constraint]) -> None:
-    # using counting sort twice for linear-time sorting
-    N = len(constraints)
-
-    # first, sort by the length of the constraint
-    temp = [None for _ in range(N)]
-
-    counts = [0 for _ in range(9)]
-    for c in constraints:
-        idx = 8 - len(c.indices)
-        counts[idx] += 1
-    counts = np.cumsum(counts)
-
-    for c in constraints[::-1]:
-        idx = 8 - len(c.indices)
-        counts[idx] -= 1
-        temp[counts[idx]] = c
-    
-    # second, do a stable sort by the value of the constraint
-    counts = [0 for _ in range(9)]
-    for c in temp:
-        idx = 8 - c.value
-        counts[idx] += 1
-    counts = np.cumsum(counts)
-
-    for c in temp[::-1]:
-        idx = 8 - c.value
-        counts[idx] -= 1
-        constraints[counts[idx]] = c
 
 
 def _subset_optimization(a: Constraint, b: Constraint) -> tuple[list[Constraint], bool]:
