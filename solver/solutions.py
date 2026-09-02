@@ -56,21 +56,21 @@ def extract_sure_variables(solutions: list[Solution]) -> tuple[list, list]:
     Returns:
         tuple[list, list]: (list of surely false variables, list of surely true variables)
     """
-    index_placements = defaultdict(int)
+    variable_placements = defaultdict(int)  # placements where the variable is true
     all_placements = defaultdict(int)
 
     for solution in solutions:
         for idx, count in solution.placement_count.items():
-            index_placements[idx] += count
+            variable_placements[idx] += count
             all_placements[idx] += solution.all_placements
     
     sure_false = []
     sure_true = []
 
-    for idx in index_placements:
-        if index_placements[idx] == 0:
+    for idx in variable_placements:
+        if variable_placements[idx] == 0:
             sure_false.append(idx)
-        elif index_placements[idx] == all_placements[idx]:
+        elif variable_placements[idx] == all_placements[idx]:
             sure_true.append(idx)
 
     return sure_false, sure_true
@@ -92,8 +92,8 @@ def combine_related_solutions(a: Solution, b: Solution) -> Solution:
     mines_used = a.mines_used
     placement_count = {}
 
-    for index in a.placement_count:
-        placement_count[index] = a.placement_count[index] + b.placement_count[index]
+    for variable in a.placement_count:
+        placement_count[variable] = a.placement_count[variable] + b.placement_count[variable]
     
     all_placements = a.all_placements + b.all_placements
 
@@ -115,13 +115,13 @@ def combine_unrelated_solutions(a: Solution, b: Solution) -> Solution:
     mines_used = a.mines_used + b.mines_used
     placement_count = {}
 
-    for index, count in a.placement_count.items():
+    for variable, count in a.placement_count.items():
         count *= b.all_placements
-        placement_count[index] = count
+        placement_count[variable] = count
     
-    for index, count in b.placement_count.items():
+    for variable, count in b.placement_count.items():
         count *= a.all_placements
-        placement_count[index] = count
+        placement_count[variable] = count
 
     all_placements = a.all_placements * b.all_placements
     
@@ -137,18 +137,18 @@ def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
     Returns:
         list[Solution]: Possible solutions - each separate solution is for different number of mines used
     """
-    all_indices = set()
+    all_variables = set()
 
     for c in constraints:
-        all_indices.update(c.indices)
+        all_variables.update(c.variables)
     
-    all_indices = list(all_indices)
-    N = len(all_indices)
+    all_variables = list(all_variables)
+    N = len(all_variables)
 
     mines_left = [c.value for c in constraints]
-    tiles_left = [len(c.indices) for c in constraints]
+    tiles_left = [len(c.variables) for c in constraints]
 
-    idx_constraints = [[i for i, c in enumerate(constraints) if index in c.indices] for index in all_indices]  # which constraints are affected by indices
+    var_constraints = [[i for i, c in enumerate(constraints) if variable in c.variables] for variable in all_variables]  # which constraints are affected by variables
 
     cur_solution = np.zeros(N, np.bool_)
 
@@ -165,28 +165,28 @@ def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
             all_solutions[mines_used] += 1
             return
         
-        for c in idx_constraints[i]:
+        for c in var_constraints[i]:
             tiles_left[c] -= 1
 
         # try True
         cur_solution[i] = True
         mines_used += 1
-        for c in idx_constraints[i]:
+        for c in var_constraints[i]:
             mines_left[c] -= 1
         
-        if all(0 <= mines_left[c] <= tiles_left[c] for c in idx_constraints[i]):
+        if all(0 <= mines_left[c] <= tiles_left[c] for c in var_constraints[i]):
             csp(i+1)
         
         # try False
         cur_solution[i] = False
         mines_used -= 1
-        for c in idx_constraints[i]:
+        for c in var_constraints[i]:
             mines_left[c] += 1
         
-        if all(0 <= mines_left[c] <= tiles_left[c] for c in idx_constraints[i]):
+        if all(0 <= mines_left[c] <= tiles_left[c] for c in var_constraints[i]):
             csp(i+1)
 
-        for c in idx_constraints[i]:
+        for c in var_constraints[i]:
             tiles_left[c] += 1
 
     csp(0)
@@ -196,7 +196,7 @@ def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
     for mines_used in solutions:
         solution = Solution(
             mines_used,
-            {index: count for index, count in zip(all_indices, solutions[mines_used])},
+            {variable: count for variable, count in zip(all_variables, solutions[mines_used])},
             all_solutions[mines_used],
         )
         result.append(solution)

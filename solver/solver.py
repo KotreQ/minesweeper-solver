@@ -35,8 +35,8 @@ class MinesweeperSolver:
         constraints = optimize_constraints(constraints)
 
         for c in constraints:
-            if len(c.indices) == 1:
-                y, x = list(c.indices)[0]
+            if len(c.variables) == 1:
+                y, x = list(c.variables)[0]
                 if c.value:
                     self.__game.place_flag(x, y)
                 else:

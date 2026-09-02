@@ -9,7 +9,7 @@ from .unionfind import UnionFind
 @dataclass(frozen=True, slots=True)
 class Constraint:
     value: int
-    indices: frozenset[tuple[int, int]]
+    variables: frozenset[tuple[int, int]]
 
 
 def get_constraints(grid):
@@ -46,12 +46,12 @@ def sort_constraints(constraints: list[Constraint]) -> None:
 
     counts = [0 for _ in range(9)]
     for c in constraints:
-        idx = 8 - len(c.indices)
+        idx = 8 - len(c.variables)
         counts[idx] += 1
     counts = np.cumsum(counts)
 
     for c in constraints[::-1]:
-        idx = 8 - len(c.indices)
+        idx = 8 - len(c.variables)
         counts[idx] -= 1
         temp[counts[idx]] = c
     
@@ -77,13 +77,13 @@ def find_disjoint_constraints(constraints: list[Constraint]) -> list[list[Constr
     Returns:
         list[list[Constraint]]: Independent lists of constraints
     """
-    uf = UnionFind()  # structure has both Constraint and tuple[int, int] index inside
+    uf = UnionFind()  # structure has both Constraint and tuple[int, int] variable index inside
 
     for c in constraints:
         uf.add(c)
-        for index in c.indices:
-            uf.add(index)
-            uf.union(c, index)
+        for variable in c.variables:
+            uf.add(variable)
+            uf.union(c, variable)
     
     disjoint_sets = defaultdict(list)
 
@@ -146,19 +146,19 @@ def optimize_constraints(constraints: list[Constraint]) -> list[Constraint]:
 
 
 def _subset_optimization(a: Constraint, b: Constraint) -> tuple[list[Constraint], bool]:
-    if a.indices.issuperset(b.indices):
+    if a.variables.issuperset(b.variables):
         new_val = a.value - b.value
-        new_indices = a.indices - b.indices
-        new = Constraint(new_val, new_indices)
+        new_variables = a.variables - b.variables
+        new = Constraint(new_val, new_variables)
         return [new], True
     return [], False
 
 
 def _intersection_optimization(a: Constraint, b: Constraint) -> tuple[list[Constraint], bool]:
-    if not a.indices.isdisjoint(b.indices):
-        AmB = a.indices - b.indices
-        BmA = b.indices - a.indices
-        AnB = a.indices.intersection(b.indices)
+    if not a.variables.isdisjoint(b.variables):
+        AmB = a.variables - b.variables
+        BmA = b.variables - a.variables
+        AnB = a.variables.intersection(b.variables)
 
         if a.value - b.value == len(AmB):
             c1 = Constraint(a.value - b.value, AmB)
@@ -170,10 +170,10 @@ def _intersection_optimization(a: Constraint, b: Constraint) -> tuple[list[Const
 
 
 def _expand_trivial(a: Constraint) -> tuple[list[Constraint], bool]:
-    if a.value == 0 and len(a.indices) > 1:
-        return [Constraint(0, frozenset([idx])) for idx in a.indices], True
+    if a.value == 0 and len(a.variables) > 1:
+        return [Constraint(0, frozenset([idx])) for idx in a.variables], True
     
-    if a.value == len(a.indices) and len(a.indices) > 1:
-        return [Constraint(1, frozenset([idx])) for idx in a.indices], True
+    if a.value == len(a.variables) and len(a.variables) > 1:
+        return [Constraint(1, frozenset([idx])) for idx in a.variables], True
     
     return [], False
