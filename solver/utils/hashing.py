@@ -11,4 +11,4 @@ def hash_jsonable(value, *, digest_size=64) -> bytes:
         indent=None
     ).encode("utf-8")
 
-    return hashlib.blake2b(payload, digest_size=digest_size)
+    return hashlib.blake2b(payload, digest_size=digest_size).digest()
