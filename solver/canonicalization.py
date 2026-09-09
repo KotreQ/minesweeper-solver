@@ -15,7 +15,7 @@ def canonicalize_constraints(constraints: list[Constraint]) -> CanonicalizedCons
     # create an array "vertices": list of (arbitrary_constraint_id, constraint_value) or (variable_position, None)
     vertices = []
     for constraint_id, constraint in enumerate(constraints):
-        vertices.append((constraint_id, constraint.value))
+        vertices.append((constraint_id, int(constraint.value)))
 
     all_variables = set()
     for constraint in constraints:
@@ -43,7 +43,7 @@ def canonicalize_constraints(constraints: list[Constraint]) -> CanonicalizedCons
         adjacency[u].append(v)
         adjacency[v].append(u)
 
-    color_classes = defaultdict[set]
+    color_classes = defaultdict(set)
     for temp, (_, label) in enumerate(vertices):
         color_classes[label].add(temp)
 
