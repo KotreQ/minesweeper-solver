@@ -1,15 +1,9 @@
-from dataclasses import dataclass
 import numpy as np
 from collections import defaultdict
 from .frontier import find_edges
 from .grid import get_neighbours_coords
 from .unionfind import UnionFind
-
-
-@dataclass(frozen=True, slots=True)
-class Constraint:
-    value: int
-    variables: frozenset[tuple[int, int]]
+from .constraint import Constraint
 
 
 def get_constraints(grid):
