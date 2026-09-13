@@ -72,7 +72,7 @@ def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
     for mines_used in solutions:
         solution = Solution(
             mines_used,
-            {variable: count for variable, count in zip(all_variables, solutions[mines_used])},
+            {variable: int(count) for variable, count in zip(all_variables, solutions[mines_used])},
             all_solutions[mines_used],
         )
         result.append(solution)
