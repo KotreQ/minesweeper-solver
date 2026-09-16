@@ -15,8 +15,7 @@ def get_constraints(grid):
     mines_left = grid["value"] - grid["flagged_neighbours"]
     is_unknown = ~grid["is_revealed"] & ~grid["is_flagged"]
 
-    y_list, x_list = np.where(edge_mask)
-    for x, y in zip(x_list, y_list):
+    for y, x in np.argwhere(edge_mask):
         value = mines_left[y, x]
         indices = []
 
