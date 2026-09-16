@@ -22,8 +22,6 @@ class CacheStorage:
 class CspCacheManager:
     def __init__(self):
         self._cache = CacheStorage()
-        self.cache_hits = 0
-        self.cache_misses = 0
 
     def get_solutions(self, constraints: list[Constraint]) -> list[Solution]:
         canon = canonicalize_constraints(constraints)
