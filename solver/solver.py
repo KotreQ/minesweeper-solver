@@ -1,5 +1,3 @@
-import random
-
 import numpy as np
 
 from game.game import GameState, MinesweeperGame
@@ -8,6 +6,7 @@ from game.utils import print_grid
 from .grid import update_numpy_grid, cell_dtype
 from .constraints import get_constraints, optimize_constraints
 from .solutions import find_constraints_solutions
+from .probability import calculate_probabilities
 
 
 class MinesweeperSolver:
@@ -48,12 +47,12 @@ class MinesweeperSolver:
 
         solutions = find_constraints_solutions(constraints)
 
-        while True:
-            y = random.randrange(self.__rows)
-            x = random.randrange(self.__cols)
-            if not self.__grid[y, x]["is_revealed"] and not self.__grid[y, x]["is_flagged"]:
-                self.__game.uncover(x, y)
-                break
+        mines_left = self.__game.mine_count - self.__game.flags_placed
+
+        probabilities = calculate_probabilities(self.__grid, solutions, mines_left)
+
+        prob, var = probabilities[0]
+        self.__game.uncover(var[1], var[0])
 
     def print_grid(self):
         print_grid(self.__game.grid)
