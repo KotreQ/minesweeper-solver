@@ -130,7 +130,9 @@ class MinesweeperGame:
             return
 
         if not self.__mines_placed:
-            self.__place_mines([(x, y)])
+            safe_spots = [(x, y)] + list(get_neighbours(x, y, self.__cols, self.__rows))
+
+            self.__place_mines(safe_spots)
             self.__mines_placed = True
 
         if self.__time_started is None:
