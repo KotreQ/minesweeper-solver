@@ -17,6 +17,8 @@ class MinesweeperSolver:
 
         self.__grid = np.empty((self.__rows, self.__cols), dtype=cell_dtype)
 
+        self.__risk_taken = 0
+
     @property
     def finished(self):
         return self.__game.state != GameState.RUNNING
@@ -53,6 +55,12 @@ class MinesweeperSolver:
 
         prob, var = probabilities[0]
         self.__game.uncover(var[1], var[0])
+
+        self.__risk_taken += (1-self.__risk_taken) * prob
+
+    @property
+    def risk_taken(self):
+        return self.__risk_taken
 
     def print_grid(self):
         print_grid(self.__game.grid)
