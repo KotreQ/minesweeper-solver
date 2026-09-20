@@ -4,6 +4,18 @@ from .constraint import Constraint
 from .solution import Solution
 
 
+def get_csp_variables_sorted(constraints: list[Constraint]) -> list[tuple[int, int]] | list[int]:
+    variable_scores = defaultdict(float)
+
+    for c in constraints:
+        for var in c.variables:
+            variable_scores[var] += 1.0 / len(c.variables)
+
+    variables = sorted(variable_scores.keys(), key=lambda var: variable_scores[var], reverse=True)
+
+    return variables
+
+
 def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
     """Finds all possible solutions for the specified constraints using a brute-force algorithm
 
@@ -13,12 +25,7 @@ def csp_bruteforce(constraints: list[Constraint]) -> list[Solution]:
     Returns:
         list[Solution]: Possible solutions - each separate solution is for different number of mines used
     """
-    all_variables = set()
-
-    for c in constraints:
-        all_variables.update(c.variables)
-    
-    all_variables = list(all_variables)
+    all_variables = get_csp_variables_sorted(constraints)
     N = len(all_variables)
 
     mines_left = [c.value for c in constraints]
