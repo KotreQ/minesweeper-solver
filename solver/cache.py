@@ -26,7 +26,7 @@ class CspCacheManager:
     def get_solutions(self, constraints: list[Constraint]) -> list[Solution]:
         canon = canonicalize_constraints(constraints)
 
-        cache_key = hash_jsonable(canon.cache_key, digest_size=32).hex()
+        cache_key = hash_jsonable(canon.cache_key, digest_size=32)
 
         if cache_key not in self._cache:
             canon_constraints = []
