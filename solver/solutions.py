@@ -5,7 +5,7 @@ import math
 
 from .solution import Solution
 from .constraint import Constraint
-from .constraints import find_disjoint_constraints
+from .constraints import find_disjoint_constraints, optimize_constraints
 from .cache import MinesweeperSolutionsCache
 
 
@@ -43,12 +43,20 @@ def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:
     Returns:
         list[Solution]: All possible solutions with regard to mine counts
     """
+
+    constraints = optimize_constraints(constraints)
     constraint_sets = find_disjoint_constraints(constraints)
 
     sets_solutions = []
     for constraint_set in constraint_sets:
-        set_solutions = csp_cache.get_solutions(constraint_set)
-        sets_solutions.append(set_solutions)
+        if len(constraint_set) == 1:
+            solution = get_trivial_constraint_solution(constraint_set[0])
+            sets_solutions.append([solution])
+
+        else:
+            # TODO: Use recursion here
+            set_solutions = []
+            sets_solutions.append(set_solutions)
 
     if sets_solutions:
         full_solutions = [reduce(combine_unrelated_solutions, full_solution) for full_solution in product(*sets_solutions)]

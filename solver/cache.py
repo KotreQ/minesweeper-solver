@@ -1,6 +1,5 @@
 from .constraint import Constraint
 from .solution import Solution
-from .csp import csp_bruteforce
 from .canonicalization import canonicalize_constraints
 from .utils.hashing import hash_jsonable
 
@@ -19,39 +18,45 @@ class CacheStorage:
         self._cache[key] = value
 
 
+CACHE_KEY_SIZE = 32
+
 class MinesweeperSolutionsCache:
     def __init__(self):
         self._cache = CacheStorage()
 
-    def get_solutions(self, constraints: list[Constraint]) -> list[Solution]:
+    def get(self, constraints: list[Constraint]) -> list[Solution] | None:
         canon = canonicalize_constraints(constraints)
 
-        cache_key = hash_jsonable(canon.cache_key, digest_size=32)
+        cache_key = hash_jsonable(canon.cache_key, digest_size=CACHE_KEY_SIZE)
 
         if cache_key not in self._cache:
-            canon_constraints = []
-            for constraint in constraints:
-                canon_vars = frozenset(canon.var2canon[var] for var in constraint.variables)
-                canon_constraint = Constraint(constraint.value, canon_vars)
-                canon_constraints.append(canon_constraint)
+            return None
 
-            canon_solutions = csp_bruteforce(canon_constraints)
-
-            self._cache[cache_key] = canon_solutions
-
-        else:
-            canon_solutions = self._cache[cache_key]
+        canon_solutions = self._cache[cache_key]
 
         solutions = []
         for canon_solution in canon_solutions:
             solution = Solution(
                 canon_solution.mines_used,
-                {
-                    canon.canon2var[canon_var]: placement_count
-                    for canon_var, placement_count in canon_solution.placement_count.items()
-                },
+                {canon.canon2var[canon_var]: placement_count for canon_var, placement_count in canon_solution.placement_count.items()},
                 canon_solution.all_placements
             )
             solutions.append(solution)
 
         return solutions
+
+    def save(self, constraints: list[Constraint], solutions: list[Solution]):
+        canon = canonicalize_constraints(constraints)
+
+        cache_key = hash_jsonable(canon.cache_key, digest_size=CACHE_KEY_SIZE)
+
+        canon_solutions = []
+        for solution in solutions:
+            canon_solution = Solution(
+                solution.mines_used,
+                {canon.var2canon[var]: placement_count for var, placement_count in solution.placement_count.items()},
+                solution.all_placements
+            )
+            canon_solutions.append(canon_solution)
+
+        self._cache[cache_key] = canon_solutions
