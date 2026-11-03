@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import product
 from functools import reduce
+import math
 
 from .solution import Solution
 from .constraint import Constraint
@@ -19,6 +20,18 @@ def get_max_score_variable(constraints: list[Constraint]) -> tuple[int, int] | i
             variable_scores[var] += 1.0 / len(c.variables)
 
     return max(variable_scores.keys(), key=lambda var: variable_scores[var])
+
+
+def get_trivial_constraint_solution(constraint: Constraint) -> Solution:
+    mines_used = constraint.value
+    all_placements = math.comb(len(constraint.variables, constraint.value))
+    var_placement_count = math.comb(len(constraint.variables)-1, constraint.value-1) if constraint.value > 0 else 0
+
+    return Solution(
+        mines_used,
+        {var: var_placement_count for var in constraint.variables},
+        all_placements
+    )
 
 
 def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:
