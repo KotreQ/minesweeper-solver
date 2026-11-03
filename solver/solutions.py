@@ -5,10 +5,20 @@ from functools import reduce
 from .solution import Solution
 from .constraint import Constraint
 from .constraints import find_disjoint_constraints
-from .cache import CspCacheManager
+from .cache import MinesweeperSolutionsCache
 
 
-csp_cache = CspCacheManager()
+csp_cache = MinesweeperSolutionsCache()
+
+
+def get_max_score_variable(constraints: list[Constraint]) -> tuple[int, int] | int:
+    variable_scores = defaultdict(float)
+
+    for c in constraints:
+        for var in c.variables:
+            variable_scores[var] += 1.0 / len(c.variables)
+
+    return max(variable_scores.keys(), key=lambda var: variable_scores[var])
 
 
 def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:

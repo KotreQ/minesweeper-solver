@@ -19,7 +19,7 @@ class CacheStorage:
         self._cache[key] = value
 
 
-class CspCacheManager:
+class MinesweeperSolutionsCache:
     def __init__(self):
         self._cache = CacheStorage()
 
