@@ -44,35 +44,6 @@ def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:
     return combined_solutions
 
 
-def extract_sure_variables(solutions: list[Solution]) -> tuple[list, list]:
-    """Extract variables that have to be either 1 or 0 in all solutions
-
-    Args:
-        solutions (list[Solution]): List of solutions to check
-
-    Returns:
-        tuple[list, list]: (list of surely false variables, list of surely true variables)
-    """
-    variable_placements = defaultdict(int)  # placements where the variable is true
-    all_placements = defaultdict(int)
-
-    for solution in solutions:
-        for idx, count in solution.placement_count.items():
-            variable_placements[idx] += count
-            all_placements[idx] += solution.all_placements
-    
-    sure_false = []
-    sure_true = []
-
-    for idx in variable_placements:
-        if variable_placements[idx] == 0:
-            sure_false.append(idx)
-        elif variable_placements[idx] == all_placements[idx]:
-            sure_true.append(idx)
-
-    return sure_false, sure_true
-
-
 def combine_related_solutions(a: Solution, b: Solution) -> Solution:
     """Combines solutions that use the same number of mines and on the same indices
 
