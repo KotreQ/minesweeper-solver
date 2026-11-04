@@ -24,8 +24,8 @@ def get_max_score_variable(constraints: list[Constraint]) -> tuple[int, int] | i
 
 def get_trivial_constraint_solution(constraint: Constraint) -> Solution:
     mines_used = constraint.value
-    all_placements = math.comb(len(constraint.variables, constraint.value))
-    var_placement_count = math.comb(len(constraint.variables)-1, constraint.value-1) if constraint.value > 0 else 0
+    all_placements = math.comb(len(constraint.variables), constraint.value)
+    var_placement_count = math.comb(len(constraint.variables) - 1, constraint.value - 1) if constraint.value > 0 else 0
 
     return Solution(
         mines_used,

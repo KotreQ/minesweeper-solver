@@ -106,17 +106,18 @@ def lock_constraints_variable(constraints: list[Constraint], variable: int | tup
     for c in constraints:
         if variable in c.variables:
             new_value = c.value - 1 if value else c.value
-            new_variables = c.variables.difference(variable)
+            new_variables = c.variables.difference([variable])
             if new_value < 0 or new_value > len(new_variables):
                 return [], False
 
-            new_constraint = Constraint(new_value, new_variables)
-            new_constraints.append(new_constraint)
+            if len(new_variables) > 0:
+                new_constraint = Constraint(new_value, new_variables)
+                new_constraints.append(new_constraint)
 
         else:
             new_constraints.append(c)
 
-    return new_constraints
+    return new_constraints, True
 
 
 def optimize_constraints(constraints: list[Constraint]) -> list[Constraint]:
