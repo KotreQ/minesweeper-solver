@@ -5,7 +5,7 @@ import math
 
 from .solution import Solution
 from .constraint import Constraint
-from .constraints import find_disjoint_constraints, optimize_constraints
+from .constraints import find_disjoint_constraints, lock_constraints_variable, optimize_constraints
 from .cache import MinesweeperSolutionsCache
 
 
@@ -49,29 +49,75 @@ def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:
 
     sets_solutions = []
     for constraint_set in constraint_sets:
+        # Trivial case
         if len(constraint_set) == 1:
             solution = get_trivial_constraint_solution(constraint_set[0])
             sets_solutions.append([solution])
 
+        # Non-trivial case
         else:
-            # TODO: Use recursion here
-            set_solutions = []
-            sets_solutions.append(set_solutions)
+            set_solutions = csp_cache.get(constraint_set)
 
+            # If case is in cache
+            if set_solutions is not None:
+                sets_solutions.append(set_solutions)
+            
+            # If case is not in cache, solve and save
+            else:
+                set_solutions = []
+
+                locked_var = get_max_score_variable(constraint_set)
+
+                constraintsA, successA = lock_constraints_variable(constraint_set, locked_var, True)
+                constraintsB, successB = lock_constraints_variable(constraint_set, locked_var, False)
+
+                if successA:
+                    subsolutionsA = find_constraints_solutions(constraintsA)
+                    for solution in subsolutionsA:
+                        mines_used = solution.mines_used + 1
+                        all_placements = solution.all_placements
+                        placement_count = solution.placement_count
+                        placement_count[locked_var] = all_placements
+                        set_solutions.append(Solution(mines_used, placement_count, all_placements))
+
+                if successB:
+                    subsolutionsB = find_constraints_solutions(constraintsB)
+                    for solution in subsolutionsB:
+                        mines_used = solution.mines_used
+                        all_placements = solution.all_placements
+                        placement_count = solution.placement_count
+                        placement_count[locked_var] = 0
+                        set_solutions.append(Solution(mines_used, placement_count, all_placements))
+
+                # group solutions by mines used
+                grouped_solutions = defaultdict(list)
+                for s in set_solutions:
+                    grouped_solutions[s.mines_used].append(s)
+                set_solutions = [
+                    reduce(combine_related_solutions, solutions)
+                    for solutions in grouped_solutions.values()
+                ]
+
+                # save to cache
+                csp_cache.save(constraint_set, set_solutions)
+
+                sets_solutions.append(set_solutions)
+
+    # combine solutions of sets into solutions of all constraints
     if sets_solutions:
         full_solutions = [reduce(combine_unrelated_solutions, full_solution) for full_solution in product(*sets_solutions)]
     else:
         full_solutions = []
 
-    combined_solutions = {}  # mines_used: solution
+    # group solutions by mines used
+    grouped_solutions = defaultdict(list)
     for s in full_solutions:
-        if not s.mines_used in combined_solutions:
-            combined_solutions[s.mines_used] = s
-        else:
-            combined_solutions[s.mines_used] = combine_related_solutions(combined_solutions[s.mines_used], s)
-    
-    combined_solutions = list(combined_solutions.values())
-    
+        grouped_solutions[s.mines_used].append(s)
+    combined_solutions = [
+        reduce(combine_related_solutions, solutions)
+        for solutions in grouped_solutions.values()
+    ]
+
     return combined_solutions
 
 
