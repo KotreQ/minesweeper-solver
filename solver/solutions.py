@@ -76,7 +76,7 @@ def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:
                     for solution in subsolutionsA:
                         mines_used = solution.mines_used + 1
                         all_placements = solution.all_placements
-                        placement_count = solution.placement_count
+                        placement_count = solution.placement_count.copy()
                         placement_count[locked_var] = all_placements
                         set_solutions.append(Solution(mines_used, placement_count, all_placements))
 
@@ -85,7 +85,7 @@ def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:
                     for solution in subsolutionsB:
                         mines_used = solution.mines_used
                         all_placements = solution.all_placements
-                        placement_count = solution.placement_count
+                        placement_count = solution.placement_count.copy()
                         placement_count[locked_var] = 0
                         set_solutions.append(Solution(mines_used, placement_count, all_placements))
 
