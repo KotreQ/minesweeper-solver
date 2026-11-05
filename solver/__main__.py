@@ -51,15 +51,23 @@ def main() -> None:
 
     ### DEMO
 
-    game = MinesweeperGame(COLS, ROWS, MINES)
+    try:
+        while True:
+            game = MinesweeperGame(COLS, ROWS, MINES)
 
-    solver = MinesweeperSolver(game)
+            solver = MinesweeperSolver(game)
 
-    while not solver.finished:
-        time.sleep(0.2)
-        solver.make_move()
-        solver.print_grid()
-    print(f"Game state: {game.state.name}")
+            while not solver.finished:
+                time.sleep(0.2)
+                solver.make_move()
+                solver.print_grid()
+            print(f"Game state: {game.state.name}")
+            print(f"Risk taken: {solver.risk_taken*100:.2f}%")
+
+            time.sleep(3)
+
+    except KeyboardInterrupt:
+        print("Exiting...")
 
 
 if __name__ == "__main__":
