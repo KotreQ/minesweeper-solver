@@ -31,6 +31,8 @@ class MinesweeperSolver:
 
         move_made = False
 
+        is_first_move = self.__game.revealed_tiles == 0
+
         constraints = get_constraints(self.__grid)
 
         constraints = optimize_constraints(constraints)
@@ -56,7 +58,8 @@ class MinesweeperSolver:
         prob, var = probabilities[0]
         self.__game.uncover(var[1], var[0])
 
-        self.__risk_taken += (1-self.__risk_taken) * prob
+        if not is_first_move:
+            self.__risk_taken += (1-self.__risk_taken) * prob
 
     @property
     def risk_taken(self):
