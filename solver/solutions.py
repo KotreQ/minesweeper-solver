@@ -5,7 +5,7 @@ import math
 
 from .solution import Solution
 from .constraint import Constraint
-from .constraints import find_disjoint_constraints, lock_constraints_variable, optimize_constraints
+from .constraints import find_disjoint_constraints, lock_constraints_variable
 from .cache import MinesweeperSolutionsCache
 
 
@@ -44,7 +44,9 @@ def find_constraints_solutions(constraints: list[Constraint]) -> list[Solution]:
         list[Solution]: All possible solutions with regard to mine counts
     """
 
-    constraints = optimize_constraints(constraints)
+    if len(constraints) == 0:
+        return [Solution(0, {}, 1)]
+
     constraint_sets = find_disjoint_constraints(constraints)
 
     sets_solutions = []
