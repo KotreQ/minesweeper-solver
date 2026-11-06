@@ -1,12 +1,25 @@
+import json
+import os
+from pathlib import Path
+
 from .constraint import Constraint
 from .solution import Solution
 from .canonicalization import canonicalize_constraints
 from .utils.hashing import hash_jsonable
 
 
+# Resolved from this file's physical location rather than cwd or the import name,
+# so every import structure (package import, direct script run, symlink) uses the
+# same folder. `resolve()` also collapses symlinks to the real path.
+CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
+
+
 class CacheStorage:
-    def __init__(self):
+    def __init__(self, directory: Path = CACHE_DIR):
+        self._directory = Path(directory)
         self._cache: dict[bytes, list[Solution]] = {}
+        self._directory.mkdir(parents=True, exist_ok=True)
+        self.__load_cache()
 
     def __contains__(self, key: bytes):
         return key in self._cache
@@ -16,6 +29,36 @@ class CacheStorage:
 
     def __setitem__(self, key: bytes, value: list[Solution]):
         self._cache[key] = value
+        self.__save_cache(key)
+
+    def __path_for(self, key: bytes) -> Path:
+        return self._directory / f"{key.hex()}.json"
+
+    def __load_cache(self):
+        for path in self._directory.glob("*.json"):
+            try:
+                key = bytes.fromhex(path.stem)
+                payload = json.loads(path.read_text(encoding="utf-8"))
+
+                if payload.get("key") != key.hex():
+                    continue
+
+                self._cache[key] = [Solution.deserialize(item) for item in payload["solutions"]]
+            except (OSError, ValueError, KeyError, TypeError):
+                # Ignore corrupted or foreign files instead of failing the whole load.
+                continue
+
+    def __save_cache(self, key: bytes):
+        payload = {
+            "key": key.hex(),
+            "solutions": [solution.serialize() for solution in self._cache[key]],
+        }
+
+        path = self.__path_for(key)
+        tmp_path = path.with_name(f"{path.name}.tmp")
+
+        tmp_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+        os.replace(tmp_path, path)  # atomic on POSIX, avoids half-written entries
 
 
 CACHE_KEY_SIZE = 32
