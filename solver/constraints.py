@@ -16,7 +16,9 @@ def get_constraints(grid):
     is_unknown = ~grid["is_revealed"] & ~grid["is_flagged"]
 
     for y, x in np.argwhere(edge_mask):
-        value = mines_left[y, x]
+        # int() strips the numpy scalar type (int8 - uint8 promotes to int16),
+        # which would otherwise leak into Constraint/Solution.
+        value = int(mines_left[y, x])
         indices = []
 
         for nx, ny in get_neighbours_coords(x, y, rows, cols):

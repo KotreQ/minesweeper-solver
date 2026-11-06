@@ -9,15 +9,22 @@ class Solution:
     all_placements: int
 
     def serialize(self) -> dict[str, Any]:
+        # int() casts numpy scalars (e.g. np.int16) leaking in from the grid,
+        # which json.dumps cannot encode.
         # Keys are emitted as [key, count] pairs because JSON object keys cannot
         # be tuples; tuple keys become JSON arrays.
         return {
-            "mines_used": self.mines_used,
+            "mines_used": int(self.mines_used),
             "placement_count": [
-                [list(variable) if isinstance(variable, tuple) else variable, count]
+                [
+                    [int(component) for component in variable]
+                    if isinstance(variable, tuple)
+                    else int(variable),
+                    int(count),
+                ]
                 for variable, count in self.placement_count.items()
             ],
-            "all_placements": self.all_placements,
+            "all_placements": int(self.all_placements),
         }
 
     @classmethod
