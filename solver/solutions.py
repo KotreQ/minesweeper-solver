@@ -16,10 +16,17 @@ def get_max_score_variable(constraints: list[Constraint]) -> tuple[int, int] | i
     variable_scores = defaultdict(float)
 
     for c in constraints:
-        for var in c.variables:
-            variable_scores[var] += 1.0 / len(c.variables)
+        size = len(c.variables)
+        if size == 0:
+            continue
 
-    return max(variable_scores.keys(), key=lambda var: variable_scores[var])
+        slack = min(c.value, size - c.value)
+        weight = 1.0 / (size * (1 + slack))
+
+        for var in c.variables:
+            variable_scores[var] += weight
+
+    return max(variable_scores, key=lambda var: (variable_scores[var], var))
 
 
 def get_trivial_constraint_solution(constraint: Constraint) -> Solution:
