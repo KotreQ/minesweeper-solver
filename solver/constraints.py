@@ -105,7 +105,7 @@ def optimize_constraints(constraints: list[Constraint]) -> tuple[list[Constraint
     constraints_set = set(constraints)
 
     pair_queue = deque()
-    is_optimized = [False for _ in range(len(constraints))]
+    is_retired = [False for _ in range(len(constraints))]
 
     var_constraints_index = defaultdict(set)  # var -> [constraint indices]
 
@@ -119,13 +119,18 @@ def optimize_constraints(constraints: list[Constraint]) -> tuple[list[Constraint
             for j in intersecting_constraints:
                 pair_queue.append((i, j))
 
+    def remove_from_index(i: int):
+        constraint = constraints[i]
+        for var in constraint.variables:
+            var_constraints_index[var].remove(i)
+
     for i in range(len(constraints)):
         update_queue(i)
         
     while len(pair_queue) > 0:
         a, b = pair_queue.popleft()
 
-        if is_optimized[a] and is_optimized[b]:
+        if is_retired[a] or is_retired[b]:
             continue
 
         new, sat = _constraint_optimization(constraints[a], constraints[b])
@@ -135,9 +140,11 @@ def optimize_constraints(constraints: list[Constraint]) -> tuple[list[Constraint
         if len(new) > 0:
             new = _expand_trivial_constraints(new)
             if constraints[a] not in new:
-                is_optimized[a] = True
+                is_retired[a] = True
+                remove_from_index(a)
             if constraints[b] not in new:
-                is_optimized[b] = True
+                is_retired[b] = True
+                remove_from_index(b)
             
             new_count = 0
             for c in new:
@@ -145,12 +152,12 @@ def optimize_constraints(constraints: list[Constraint]) -> tuple[list[Constraint
                     new_count += 1
                     constraints_set.add(c)
                     constraints.append(c)
-                    is_optimized.append(False)
+                    is_retired.append(False)
 
             for i in range(len(constraints) - new_count, len(constraints)):
                 update_queue(i)
 
-    new_constraints = [c for c, was_optimized in zip(constraints, is_optimized) if not was_optimized]
+    new_constraints = [c for c, was_optimized in zip(constraints, is_retired) if not was_optimized]
 
     return new_constraints, True
 
