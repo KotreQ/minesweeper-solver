@@ -1,5 +1,5 @@
 import numpy as np
-from collections import defaultdict
+from collections import defaultdict, deque
 from .frontier import find_edges
 from .grid import get_neighbours_coords
 from .unionfind import UnionFind
@@ -30,37 +30,6 @@ def get_constraints(grid):
             constraints.append(c)
     
     return constraints
-
-
-def sort_constraints(constraints: list[Constraint]) -> None:
-    # using counting sort twice for linear-time sorting
-    N = len(constraints)
-
-    # first, sort by the length of the constraint
-    temp = [None for _ in range(N)]
-
-    counts = [0 for _ in range(9)]
-    for c in constraints:
-        idx = 8 - len(c.variables)
-        counts[idx] += 1
-    counts = np.cumsum(counts)
-
-    for c in constraints[::-1]:
-        idx = 8 - len(c.variables)
-        counts[idx] -= 1
-        temp[counts[idx]] = c
-    
-    # second, do a stable sort by the value of the constraint
-    counts = [0 for _ in range(9)]
-    for c in temp:
-        idx = 8 - c.value
-        counts[idx] += 1
-    counts = np.cumsum(counts)
-
-    for c in temp[::-1]:
-        idx = 8 - c.value
-        counts[idx] -= 1
-        constraints[counts[idx]] = c
 
 
 def find_disjoint_constraints(constraints: list[Constraint]) -> list[list[Constraint]]:
@@ -122,78 +91,104 @@ def lock_constraints_variable(constraints: list[Constraint], variable: int | tup
     return new_constraints, True
 
 
-def optimize_constraints(constraints: list[Constraint]) -> list[Constraint]:
-    running = True
-    while running:
-        running = False
+def optimize_constraints(constraints: list[Constraint]) -> tuple[list[Constraint], bool]:
+    """Optimized the constraints using intersection rules
 
-        # Firstly, optimize trivial cases
-        new_constraints = set()
-        for constraint in constraints:
-            new, is_trivial = _expand_trivial(constraint)
-            if is_trivial:
-                new_constraints.update(new)
-                running = True
-            else:
-                new_constraints.add(constraint)
+    Args:
+        constraints (list[Constraint]): The constraints to optimize
 
-        constraints = list(new_constraints)
+    Returns:
+        tuple[list[Constraint], bool]: (constraints, sat) -> Optimized constraints and are they satisfiable
+    """
 
-        # Sort them by length, so that always the first one is optimized by the second one
-        sort_constraints(constraints)
-        length = len(constraints)
+    constraints = _expand_trivial_constraints(constraints)
+    constraints_set = set(constraints)
 
-        new_constraints = set()
-        for i in range(length):
-            a = constraints[i]
-            optimized = False
+    pair_queue = deque()
+    is_optimized = [False for _ in range(len(constraints))]
 
-            for j in range(i+1, length):
-                b = constraints[j]
+    var_constraints_index = defaultdict(set)  # var -> [constraint indices]
 
-                new, optimized = _subset_optimization(a, b)
-                if optimized:
-                    new_constraints.update(new)
-                    break
+    def update_queue(i: int):
+        intersecting_constraints = set()
+        for var in constraints[i].variables:
+            intersecting_constraints.update(var_constraints_index[var])
 
-                new, optimized = _intersection_optimization(a, b)
-                if optimized:
-                    new_constraints.update(new)
-                    break
+            var_constraints_index[var].add(i)
 
-            if optimized:
-                running = True
-            else:
-                new_constraints.add(a)
-                
-        constraints = list(new_constraints)
+            for j in intersecting_constraints:
+                pair_queue.append((i, j))
+
+    for i in range(len(constraints)):
+        update_queue(i)
+        
+    while len(pair_queue) > 0:
+        a, b = pair_queue.popleft()
+
+        new, sat = _constraint_optimization(constraints[a], constraints[b])
+        if not sat:  # if any optimization is unsatisfiable, the initial constraints were too
+            return [], False
+
+        if len(new) > 0:
+            new = _expand_trivial_constraints(new)
+            if constraints[a] not in new:
+                is_optimized[a] = True
+            if constraints[b] not in new:
+                is_optimized[b] = True
+            
+            new_count = 0
+            for c in new:
+                if c not in constraints_set:
+                    new_count += 1
+                    constraints_set.add(c)
+                    constraints.append(c)
+                    is_optimized.append(False)
+
+            for i in range(len(constraints) - new_count, len(constraints)):
+                update_queue(i)
+
+    new_constraints = [c for c, was_optimized in zip(constraints, is_optimized) if not was_optimized]
+
+    return new_constraints, True
+
+
+def _constraint_optimization(a: Constraint, b: Constraint) -> tuple[list[Constraint], bool]:
+    X = a.variables - b.variables
+    Y = b.variables - a.variables
+    Z = a.variables & b.variables
+
+    if len(Z) == 0:  # constraints are disjoint
+        return [], True  # [], sat
+
+    # calculate lower and upper bounds for intersection
+    low_z = max(0, a.value - len(X), b.value - len(Y))
+    high_z = min(len(Z), a.value, b.value)
+
+    if low_z == high_z:  # if optimized
+        z_val = low_z
+        new = [
+            Constraint(z_val, Z),
+            Constraint(a.value - z_val, X),
+            Constraint(b.value - z_val, Y)
+        ]
+        return new, True  # optimized constraints, sat
     
-    return constraints
+    elif low_z < high_z:  # if not optimized
+        return [], True  # [], sat
+
+    else:  # if contradictory
+        return [], False  # [], unsat
 
 
-def _subset_optimization(a: Constraint, b: Constraint) -> tuple[list[Constraint], bool]:
-    if a.variables.issuperset(b.variables):
-        new_val = a.value - b.value
-        new_variables = a.variables - b.variables
-        new = Constraint(new_val, new_variables)
-        return [new], True
-    return [], False
-
-
-def _intersection_optimization(a: Constraint, b: Constraint) -> tuple[list[Constraint], bool]:
-    if not a.variables.isdisjoint(b.variables):
-        AmB = a.variables - b.variables
-        BmA = b.variables - a.variables
-        AnB = a.variables.intersection(b.variables)
-
-        if a.value - b.value == len(AmB):
-            c1 = Constraint(a.value - b.value, AmB)
-            c2 = Constraint(0, BmA)
-            c3 = Constraint(b.value, AnB)
-            return [c1, c2, c3], True
-
-    return [], False
-
+def _expand_trivial_constraints(constraints: list[Constraint]):
+    expanded = set()
+    for constraint in constraints:
+        new, optimized = _expand_trivial(constraint)
+        if optimized:
+            expanded.update(new)
+        else:
+            expanded.add(constraint)
+    return list(expanded)
 
 def _expand_trivial(a: Constraint) -> tuple[list[Constraint], bool]:
     if a.value == 0 and len(a.variables) > 1:

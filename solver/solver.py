@@ -35,7 +35,9 @@ class MinesweeperSolver:
 
         constraints = get_constraints(self.__grid)
 
-        constraints = optimize_constraints(constraints)
+        constraints, sat = optimize_constraints(constraints)
+        if not sat:
+            raise RuntimeError("Found constraints are unsatisfiable")
 
         for c in constraints:
             if len(c.variables) == 1:
