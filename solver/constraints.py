@@ -125,6 +125,9 @@ def optimize_constraints(constraints: list[Constraint]) -> tuple[list[Constraint
     while len(pair_queue) > 0:
         a, b = pair_queue.popleft()
 
+        if is_optimized[a] and is_optimized[b]:
+            continue
+
         new, sat = _constraint_optimization(constraints[a], constraints[b])
         if not sat:  # if any optimization is unsatisfiable, the initial constraints were too
             return [], False
