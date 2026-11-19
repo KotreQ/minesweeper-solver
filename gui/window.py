@@ -2,6 +2,7 @@ import pygame
 
 from game.game import GameState, MinesweeperGame, TileState
 from game.utils import get_neighbours
+from solver.solver import MinesweeperSolver
 
 from .graphics import (
     generate_board_graphics,
@@ -9,6 +10,7 @@ from .graphics import (
     get_counter_border_graphics,
     get_counter_graphics,
     get_face_texture,
+    get_solver_button_graphics,
 )
 from .textures import TILE_WIDTH
 
@@ -18,8 +20,7 @@ FPS = 60
 
 class MinesweeperWindow:
     def __init__(self, game_spec: MinesweeperGame | tuple[int, int, int]):
-        if not isinstance(game_spec, MinesweeperGame):
-            self.__game_spec = game_spec
+        self.__game_spec = game_spec
 
         self.__init_game(game_spec)
 
@@ -29,6 +30,7 @@ class MinesweeperWindow:
         self.__mouse_event = ((0, 0), -1)
         self.__pressed = set()
         self.__pressed_face = False
+        self.__button_pressed = False
 
     def __init_game(self, game_spec: MinesweeperGame | tuple[int, int, int]):
         if isinstance(game_spec, MinesweeperGame):
@@ -36,14 +38,28 @@ class MinesweeperWindow:
         else:
             self.__game = MinesweeperGame(*game_spec)
 
+        self.__solver = MinesweeperSolver(self.__game)
+
         self.__board_graphics = generate_board_graphics(
-            self.__game.cols, self.__game.rows
+            self.__game.cols, self.__game.rows, bottom_padding_rows=2
         )
 
         window_width = (1 + self.__game.cols + 1) * TILE_WIDTH
-        window_height = (1 + 3 + 1 + self.__game.rows + 1) * TILE_WIDTH
+        window_height = (1 + 3 + 1 + self.__game.rows + 1 + 2) * TILE_WIDTH
 
         self.__surface = pygame.display.set_mode((window_width, window_height))
+
+        button_width = min(8 * TILE_WIDTH, (self.__game.cols - 2) * TILE_WIDTH)
+        button_height = TILE_WIDTH + TILE_WIDTH // 2
+        button_y = (self.__game.rows + 6) * TILE_WIDTH + (
+            2 * TILE_WIDTH - button_height
+        ) // 2
+        self.__solver_button_rect = (
+            (window_width - button_width) // 2,
+            button_y,
+            button_width,
+            button_height,
+        )
 
         self.__face_pos = (
             ((1 + self.__game.cols + 1) * TILE_WIDTH - 28) // 2,
@@ -80,12 +96,28 @@ class MinesweeperWindow:
 
         return (None), face_pressed
 
+    def __is_over_solver_button(self, pos) -> bool:
+        x, y, width, height = self.__solver_button_rect
+        return x <= pos[0] < x + width and y <= pos[1] < y + height
+
+    def __make_solver_move(self):
+        if self.__game.state != GameState.RUNNING:
+            return
+
+        try:
+            self.__solver.make_move()
+        except RuntimeError as error:
+            print(f"Solver error: {error}")
+
     def __event_handler(self, event):
         match event.type:
             case pygame.QUIT:
                 self.__window_alive = False
 
             case pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and self.__is_over_solver_button(event.pos):
+                    self.__button_pressed = True
+
                 pressed_result = self.__calculate_pressed_element(event.pos)
                 self.__mouse_event = (
                     pressed_result,
@@ -111,6 +143,14 @@ class MinesweeperWindow:
                 self.__pressed_face = pressed_face
 
             case pygame.MOUSEBUTTONUP:
+                if (
+                    event.button == 1
+                    and self.__button_pressed
+                    and self.__is_over_solver_button(event.pos)
+                ):
+                    self.__make_solver_move()
+                self.__button_pressed = False
+
                 up_event = (self.__calculate_pressed_element(event.pos), event.button)
 
                 if self.__mouse_event == up_event:
@@ -142,6 +182,15 @@ class MinesweeperWindow:
             self.__game.state, bool(self.__pressed), self.__pressed_face
         )
 
+        solver_button_pressed = self.__button_pressed and self.__is_over_solver_button(
+            pygame.mouse.get_pos()
+        )
+        solver_button_graphics = get_solver_button_graphics(
+            self.__solver_button_rect,
+            solver_button_pressed,
+            self.__game.state == GameState.RUNNING,
+        )
+
         unplaced_flags = self.__game.mine_count - self.__game.flags_placed
         mine_counter_graphics = get_counter_graphics(
             self.__mine_counter_pos, unplaced_flags
@@ -158,6 +207,7 @@ class MinesweeperWindow:
         )
 
         self.__surface.blits(self.__board_graphics, doreturn=False)
+        self.__surface.blit(*solver_button_graphics)
         self.__surface.blits(grid_graphics, doreturn=False)
         self.__surface.blits(mine_counter_border_graphics, doreturn=False)
         self.__surface.blits(mine_counter_graphics, doreturn=False)

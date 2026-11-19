@@ -1,8 +1,30 @@
+import pygame
+
 from game.game import GameState, Tile, TileState
 from .textures import TEXTURES, TILE_WIDTH
 
+BUTTON_LABEL = "SOLVE"
+BUTTON_BACKGROUND = (192, 192, 192)
+BUTTON_BACKGROUND_PRESSED = (128, 128, 128)
+BUTTON_LIGHT = (255, 255, 255)
+BUTTON_DARK = (128, 128, 128)
+BUTTON_TEXT = (0, 0, 0)
+BUTTON_TEXT_DISABLED = (128, 128, 128)
 
-def generate_board_graphics(cols: int, rows: int):
+BUTTON_FONTS = {}
+
+
+def get_button_font(size: int):
+    font = BUTTON_FONTS.get(size)
+    if font is None:
+        if not pygame.font.get_init():
+            pygame.font.init()
+        font = pygame.font.Font(None, size)
+        BUTTON_FONTS[size] = font
+    return font
+
+
+def generate_board_graphics(cols: int, rows: int, bottom_padding_rows: int = 0):
     tile_rows = 1 + 3 + 1 + rows + 1
     tile_cols = 1 + cols + 1
     horizontal_rows = [0, 4, tile_rows - 1]
@@ -10,11 +32,13 @@ def generate_board_graphics(cols: int, rows: int):
 
     board_graphics = []
 
-    for row in range(tile_rows):
+    for row in range(tile_rows + bottom_padding_rows):
         for col in range(tile_cols):
             txt = TEXTURES["border"]["fill"]
 
-            if row in horizontal_rows and col in vertical_cols:
+            if row >= tile_rows:
+                txt = TEXTURES["border"]["fill"]
+            elif row in horizontal_rows and col in vertical_cols:
                 corner_x = vertical_cols.index(col)
                 corner_y = horizontal_rows.index(row)
 
@@ -135,6 +159,37 @@ def get_counter_graphics(offset: tuple[int, int], value: int):
         counter_graphics.append((txt, pos))
 
     return counter_graphics
+
+
+def get_solver_button_graphics(
+    rect: tuple[int, int, int, int], pressed: bool, enabled: bool
+):
+    x_offset, y_offset, width, height = rect
+
+    background = BUTTON_BACKGROUND_PRESSED if pressed else BUTTON_BACKGROUND
+    light = BUTTON_DARK if pressed else BUTTON_LIGHT
+    dark = BUTTON_LIGHT if pressed else BUTTON_DARK
+
+    button = pygame.Surface((width, height))
+    button.fill(background)
+
+    bevel = 2
+    pygame.draw.rect(button, light, (0, 0, width, bevel))
+    pygame.draw.rect(button, light, (0, 0, bevel, height))
+    pygame.draw.rect(button, dark, (0, height - bevel, width, bevel))
+    pygame.draw.rect(button, dark, (width - bevel, 0, bevel, height))
+
+    font = get_button_font(height - 6)
+    text_color = BUTTON_TEXT if enabled else BUTTON_TEXT_DISABLED
+    text = font.render(BUTTON_LABEL, True, text_color)
+
+    text_offset = 1 if pressed else 0
+    text_rect = text.get_rect(
+        center=(width // 2 + text_offset, height // 2 + text_offset)
+    )
+    button.blit(text, text_rect)
+
+    return button, (x_offset, y_offset)
 
 
 def get_counter_border_graphics(counter_offset: tuple[int, int]):
