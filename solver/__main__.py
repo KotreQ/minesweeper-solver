@@ -1,6 +1,6 @@
 import time
-
 import numpy as np
+from tqdm import tqdm
 
 from game.game import GameState, MinesweeperGame
 
@@ -18,7 +18,7 @@ def main() -> None:
     TEST_COUNT = 100
     test_times = np.zeros((TEST_COUNT), np.float64)
     test_results = np.zeros((TEST_COUNT), np.bool_)
-    for i in range(TEST_COUNT):
+    for i in tqdm(range(TEST_COUNT), "Solving minesweeper games"):
         test_game = MinesweeperGame(COLS, ROWS, MINES)
         test_solver = MinesweeperSolver(test_game)
 
@@ -29,7 +29,10 @@ def main() -> None:
         test_times[i] = test_time * 1000  # in ms
         test_results[i] = test_game.state == GameState.WON
 
-        print(f"\rTESTING: {(i + 1) / TEST_COUNT * 100:.1f}%", end="")
+        tqdm.write(f"TEST #{i}")
+        tqdm.write(f"Game result: {test_game.state.name}")
+        tqdm.write(f"Risk taken: {test_solver.risk_taken*100:.2f}%")
+        tqdm.write("")
     print("")
 
     win_count = np.count_nonzero(test_results)
