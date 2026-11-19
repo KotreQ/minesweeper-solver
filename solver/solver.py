@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 import numpy as np
 
 from game.game import GameState, MinesweeperGame
@@ -7,6 +9,21 @@ from .grid import update_numpy_grid, cell_dtype
 from .constraints import get_constraints, optimize_constraints
 from .solutions import find_constraints_solutions
 from .probability import calculate_probabilities
+
+
+class SolverAnalysis(NamedTuple):
+    """Result of analyzing the board.
+
+    Exactly one of the fields is set:
+
+    - sure_tiles: `(is_mine, (y, x))` pairs for tiles determined with certainty by
+      constraint optimization. Mines should be flagged, safe tiles uncovered.
+    - probabilities: `(probability, (y, x))` pairs for all unknown tiles, sorted
+      from the least to the most likely to contain a mine.
+    """
+
+    sure_tiles: list[tuple[bool, tuple[int, int]]] | None
+    probabilities: list[tuple[float, tuple[int, int]]] | None
 
 
 class MinesweeperSolver:
@@ -26,12 +43,18 @@ class MinesweeperSolver:
     def update_data(self):
         update_numpy_grid(self.__grid, self.__game.grid)
 
-    def make_move(self):
+    def analyze(self) -> SolverAnalysis:
+        """Analyzes the current board state.
+
+        If constraint optimization finds tiles that are certainly mines or certainly
+        safe, returns them in `SolverAnalysis.sure_tiles`. Otherwise returns
+        `SolverAnalysis.probabilities` for all unknown tiles.
+
+        Raises:
+            RuntimeError: if the constraints are unsatisfiable, e.g. because of an
+                incorrectly placed flag.
+        """
         self.update_data()
-
-        move_made = False
-
-        is_first_move = self.__game.revealed_tiles == 0
 
         constraints = get_constraints(self.__grid)
 
@@ -39,17 +62,13 @@ class MinesweeperSolver:
         if not sat:
             raise RuntimeError("Found constraints are unsatisfiable")
 
-        for c in constraints:
-            if len(c.variables) == 1:
-                y, x = list(c.variables)[0]
-                if c.value:
-                    self.__game.place_flag(x, y)
-                else:
-                    self.__game.uncover(x, y)
-                move_made = True
-
-        if move_made:
-            return
+        sure_tiles = [
+            (bool(c.value), next(iter(c.variables)))
+            for c in constraints
+            if len(c.variables) == 1
+        ]
+        if sure_tiles:
+            return SolverAnalysis(sure_tiles, None)
 
         solutions = find_constraints_solutions(constraints)
 
@@ -57,7 +76,22 @@ class MinesweeperSolver:
 
         probabilities = calculate_probabilities(self.__grid, solutions, mines_left)
 
-        prob, var = probabilities[0]
+        return SolverAnalysis(None, probabilities)
+
+    def make_move(self):
+        is_first_move = self.__game.revealed_tiles == 0
+
+        analysis = self.analyze()
+
+        if analysis.sure_tiles is not None:
+            for is_mine, (y, x) in analysis.sure_tiles:
+                if is_mine:
+                    self.__game.place_flag(x, y)
+                else:
+                    self.__game.uncover(x, y)
+            return
+
+        prob, var = analysis.probabilities[0]
         self.__game.uncover(var[1], var[0])
 
         if not is_first_move:
