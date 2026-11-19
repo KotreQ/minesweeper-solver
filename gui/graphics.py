@@ -3,7 +3,6 @@ import pygame
 from game.game import GameState, Tile, TileState
 from .textures import TEXTURES, TILE_WIDTH
 
-BUTTON_LABEL = "SOLVE"
 BUTTON_BACKGROUND = (192, 192, 192)
 BUTTON_BACKGROUND_PRESSED = (128, 128, 128)
 BUTTON_LIGHT = (255, 255, 255)
@@ -11,16 +10,23 @@ BUTTON_DARK = (128, 128, 128)
 BUTTON_TEXT = (0, 0, 0)
 BUTTON_TEXT_DISABLED = (128, 128, 128)
 
-BUTTON_FONTS = {}
+ANALYSIS_SAFE = (0, 200, 0)
+ANALYSIS_MID = (255, 200, 0)
+ANALYSIS_DANGER = (220, 0, 0)
+ANALYSIS_PROBABILITY_ALPHA = 110
+ANALYSIS_SURE_ALPHA = 190
+ANALYSIS_TEXT = (0, 0, 0)
+
+FONTS = {}
 
 
-def get_button_font(size: int):
-    font = BUTTON_FONTS.get(size)
+def get_font(size: int):
+    font = FONTS.get(size)
     if font is None:
         if not pygame.font.get_init():
             pygame.font.init()
         font = pygame.font.Font(None, size)
-        BUTTON_FONTS[size] = font
+        FONTS[size] = font
     return font
 
 
@@ -161,14 +167,19 @@ def get_counter_graphics(offset: tuple[int, int], value: int):
     return counter_graphics
 
 
-def get_solver_button_graphics(
-    rect: tuple[int, int, int, int], pressed: bool, enabled: bool
+def get_button_graphics(
+    rect: tuple[int, int, int, int],
+    label: str,
+    pressed: bool,
+    enabled: bool,
+    active: bool = False,
 ):
     x_offset, y_offset, width, height = rect
 
-    background = BUTTON_BACKGROUND_PRESSED if pressed else BUTTON_BACKGROUND
-    light = BUTTON_DARK if pressed else BUTTON_LIGHT
-    dark = BUTTON_LIGHT if pressed else BUTTON_DARK
+    sunken = pressed or active
+    background = BUTTON_BACKGROUND_PRESSED if sunken else BUTTON_BACKGROUND
+    light = BUTTON_DARK if sunken else BUTTON_LIGHT
+    dark = BUTTON_LIGHT if sunken else BUTTON_DARK
 
     button = pygame.Surface((width, height))
     button.fill(background)
@@ -179,9 +190,12 @@ def get_solver_button_graphics(
     pygame.draw.rect(button, dark, (0, height - bevel, width, bevel))
     pygame.draw.rect(button, dark, (width - bevel, 0, bevel, height))
 
-    font = get_button_font(height - 6)
     text_color = BUTTON_TEXT if enabled else BUTTON_TEXT_DISABLED
-    text = font.render(BUTTON_LABEL, True, text_color)
+    font_size = height - 6
+    text = get_font(font_size).render(label, True, text_color)
+    while text.get_width() > width - 10 and font_size > 8:
+        font_size -= 1
+        text = get_font(font_size).render(label, True, text_color)
 
     text_offset = 1 if pressed else 0
     text_rect = text.get_rect(
@@ -190,6 +204,55 @@ def get_solver_button_graphics(
     button.blit(text, text_rect)
 
     return button, (x_offset, y_offset)
+
+
+def get_analysis_color(probability: float) -> tuple[int, int, int]:
+    probability = min(max(probability, 0.0), 1.0)
+
+    if probability < 0.5:
+        t = probability * 2
+        return (
+            round(ANALYSIS_SAFE[0] + (ANALYSIS_MID[0] - ANALYSIS_SAFE[0]) * t),
+            round(ANALYSIS_SAFE[1] + (ANALYSIS_MID[1] - ANALYSIS_SAFE[1]) * t),
+            round(ANALYSIS_SAFE[2] + (ANALYSIS_MID[2] - ANALYSIS_SAFE[2]) * t),
+        )
+
+    t = (probability - 0.5) * 2
+    return (
+        round(ANALYSIS_MID[0] + (ANALYSIS_DANGER[0] - ANALYSIS_MID[0]) * t),
+        round(ANALYSIS_MID[1] + (ANALYSIS_DANGER[1] - ANALYSIS_MID[1]) * t),
+        round(ANALYSIS_MID[2] + (ANALYSIS_DANGER[2] - ANALYSIS_MID[2]) * t),
+    )
+
+
+def _draw_analysis_tile(surface, x, y, color, alpha, label):
+    rect = pygame.Rect(x * TILE_WIDTH, y * TILE_WIDTH, TILE_WIDTH, TILE_WIDTH)
+    pygame.draw.rect(surface, (*color, alpha), rect)
+
+    text = get_font(TILE_WIDTH - 4).render(label, True, ANALYSIS_TEXT)
+    surface.blit(text, text.get_rect(center=rect.center))
+
+
+def generate_analysis_graphics(analysis, cols: int, rows: int):
+    if analysis is None:
+        return None
+
+    surface = pygame.Surface((cols * TILE_WIDTH, rows * TILE_WIDTH), pygame.SRCALPHA)
+
+    if analysis.sure_tiles is not None:
+        for is_mine, (y, x) in analysis.sure_tiles:
+            color = ANALYSIS_DANGER if is_mine else ANALYSIS_SAFE
+            label = "F" if is_mine else "0"
+            _draw_analysis_tile(surface, x, y, color, ANALYSIS_SURE_ALPHA, label)
+    else:
+        for probability, (y, x) in analysis.probabilities:
+            color = get_analysis_color(probability)
+            label = str(min(round(probability * 100), 99))
+            _draw_analysis_tile(
+                surface, x, y, color, ANALYSIS_PROBABILITY_ALPHA, label
+            )
+
+    return surface
 
 
 def get_counter_border_graphics(counter_offset: tuple[int, int]):
